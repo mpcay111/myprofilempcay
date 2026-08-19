@@ -138,8 +138,19 @@ Supabase, and from then on the database is the source of truth.
 
 ### Deploying
 
-Set the same four variables in **Vercel → Project Settings → Environment
-Variables** before deploying, or the live admin will load but refuse to save.
+Set the same variables in **Vercel → Project Settings → Environment Variables**
+before deploying, or the live admin will load but refuse to save.
+`NEXT_PUBLIC_SUPABASE_URL` is read at *build* time — it decides which image host
+is permitted — so it has to exist before the build that should serve uploads.
+
+`vercel.json` pins `"framework": "nextjs"`. That is not decoration. Without it
+the project relies on the dashboard's Framework Preset, and if that is not set
+to Next.js the build still *succeeds* — Vercel runs `npm run build`, then throws
+away `.next` and publishes `public/` as a plain static site. The result is a
+green deployment where every route 404s, `/_next/static/*` is missing, and the
+only things served are the raw files under `public/`. It looks like a routing
+bug and is really a project setting, so it is pinned in the repo where it cannot
+drift.
 
 ### Changing the password
 
