@@ -95,10 +95,13 @@ export function Hero({ content }: { content: SiteContent }) {
                 <h1 className={nameSize}>
                   {identity.name}
                   {identity.credentials && (
-                    /* `align-top` pins the post-nominal to the top of the line
-                       box, which lands it on the name's cap line at every size
-                       in the clamp — and still follows the last word cleanly
-                       when the name wraps.
+                    /* Baseline-aligned, like any post-nominal after a name.
+                       This was `align-top`, which pins the small text to the
+                       top of the line box — fine while the name fit on one
+                       line, but once a profile photo narrowed the column the
+                       name began wrapping, and the credential ended up floating
+                       in the descender space above the final line instead of
+                       sitting beside it.
 
                        Size and colour are overridden off `.label` rather than
                        replacing it: the post-nominal has to scale with the h1
@@ -106,7 +109,7 @@ export function Hero({ content }: { content: SiteContent }) {
                        would detach from the name at the large end. Utilities
                        outrank the components layer, so the class still carries
                        the register. */
-                    <span className="label ml-2 align-top text-[clamp(0.6875rem,1vw,0.875rem)] text-accent sm:ml-3">
+                    <span className="label ml-2 align-baseline text-[clamp(0.6875rem,1vw,0.875rem)] text-accent sm:ml-3">
                       {identity.credentials}
                     </span>
                   )}
