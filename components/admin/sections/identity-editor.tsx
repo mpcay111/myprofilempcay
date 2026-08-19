@@ -1,7 +1,7 @@
 'use client';
 
 import type { SectionEditorProps } from '@/components/admin/editor';
-import type { Identity } from '@/lib/content/schema';
+import type { Identity, SiteContent } from '@/lib/content/schema';
 import { Field, Panel, StringList, TextArea, TextInput, Toggle } from '@/components/admin/ui';
 import { ImageField } from '@/components/admin/image-field';
 
@@ -168,6 +168,31 @@ export function IdentityEditor({ content, onChange }: SectionEditorProps) {
               onChange={(v) => setIdentity('availabilityNote', orNull(v))}
               placeholder="Open to fractional and advisory work"
             />
+          )}
+        </Field>
+      </Panel>
+
+      <Panel title="Appearance">
+        <Field
+          label="Site theme"
+          hint="The default a visitor sees on their first visit. 'Match device' follows their own light/dark setting, which is usually the kindest choice. Either way there is a toggle in the site header, and a visitor's own choice is remembered on their device and overrides this."
+        >
+          {(id) => (
+            <select
+              id={id}
+              value={content.theme}
+              onChange={(e) =>
+                onChange({
+                  ...content,
+                  theme: e.target.value as SiteContent['theme'],
+                })
+              }
+              className={inputBase}
+            >
+              <option value="system">Match device</option>
+              <option value="light">Always light</option>
+              <option value="dark">Always dark</option>
+            </select>
           )}
         </Field>
       </Panel>

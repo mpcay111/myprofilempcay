@@ -24,6 +24,7 @@ export const CONTENT_TAG = 'site-content';
 export function seedContent(): SiteContent {
   const parsed = siteContentSchema.safeParse({
     identity: { ...seed.identity, photo: null, backgroundImage: null },
+    theme: 'system' as const,
     email: seed.email,
     phone: seed.phone,
     showPhone: seed.showPhone,

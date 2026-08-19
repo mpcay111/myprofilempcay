@@ -38,6 +38,7 @@ export default async function Page() {
         name={content.identity.name}
         credentials={content.identity.credentials}
         navigation={content.navigation}
+        themeDefault={content.theme}
       />
       <main id="main">
         <Hero content={content} />

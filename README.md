@@ -204,6 +204,28 @@ stored is a salted scrypt hash, which cannot be reversed into the password.
 - **Uploads are checked by magic number**, not by the declared MIME type, which
   is attacker-controlled. Files are renamed to a UUID on the way in.
 
+### Theme
+
+Both palettes already existed in `globals.css`; what was added is the choosing.
+Three places, one mechanism:
+
+- **Site default** — Admin → Identity → Appearance. *Match device* (follows the
+  visitor's own light/dark setting), *Always light*, or *Always dark*.
+- **Visitor toggle** — in the site header. Cycles device → light → dark and is
+  remembered per device. A visitor's choice always beats the site default.
+- **Admin toggle** — same control in the admin header, same storage key, so a
+  choice made in one follows you to the other.
+
+`system` is the *absence* of a class on `<html>`, not a class of its own — the
+`prefers-color-scheme` block in `globals.css` handles it, guarded by
+`:not(.light)` so an explicit light choice still wins on a dark device.
+
+The class is set by a small inline script in `<head>` ([`lib/theme.ts`](lib/theme.ts)).
+It has to be inline and synchronous: anything deferred runs after the browser
+has painted, so someone who chose dark would get a white flash on every
+navigation. That is also why `<html>` carries `suppressHydrationWarning` — the
+script deliberately changes the class before React hydrates.
+
 ### Images
 
 Uploads go to Supabase Storage and are referenced by absolute URL. Screenshots

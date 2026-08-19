@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { NavItem } from '@/lib/content/schema';
+import type { NavItem, ThemeSetting } from '@/lib/content/schema';
+import { ThemeToggle } from '@/components/theme-toggle';
 
 /**
  * The sticky bar. 56px, fixed forever — `section[id] { scroll-margin-top: 5rem }`
@@ -25,10 +26,13 @@ export function SiteHeader({
   name,
   credentials,
   navigation,
+  themeDefault,
 }: {
   name: string;
   credentials: string | null;
   navigation: NavItem[];
+  /** Only the default; the visitor's own choice overrides it client-side. */
+  themeDefault: ThemeSetting;
 }) {
 
   const [scrolled, setScrolled] = useState(false);
@@ -167,6 +171,11 @@ export function SiteHeader({
             })}
           </ul>
         </nav>
+
+        {/* Outside the nav's scroll container on purpose: inside it, the
+            toggle would scroll away with the section links on a narrow
+            screen and become unreachable. */}
+        <ThemeToggle siteDefault={themeDefault} className="-mr-1.5" />
       </div>
     </header>
   );

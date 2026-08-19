@@ -116,8 +116,17 @@ export const navItemSchema = z.object({
   label: text.min(1),
 });
 
+/**
+ * The site's default appearance. 'system' follows the visitor's own device
+ * setting, which is the respectful default; the other two override it.
+ * A visitor's explicit choice in the header always wins over this.
+ */
+export const themeSchema = z.enum(['system', 'light', 'dark']);
+export type ThemeSetting = z.infer<typeof themeSchema>;
+
 export const siteContentSchema = z.object({
   identity: identitySchema,
+  theme: themeSchema.default('system'),
   email: z.string().trim().email('Must be a valid email address'),
   phone: text,
   showPhone: z.boolean(),

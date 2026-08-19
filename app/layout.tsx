@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next';
 import { Inter, JetBrains_Mono } from 'next/font/google';
 import { getContent } from '@/lib/content/source';
+import { themeBootScript } from '@/lib/theme';
 import { orFallback } from '@/lib/placeholder';
 import './globals.css';
 
@@ -86,11 +87,26 @@ export const viewport: Viewport = {
   ],
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
+  const { theme } = await getContent();
+
   return (
-    <html lang="en" className={`${inter.variable} ${jetbrainsMono.variable}`}>
+    // suppressHydrationWarning because the boot script below mutates this
+    // element's class before React hydrates. That divergence is the point of
+    // the script, not a bug, and it is confined to this one attribute.
+    <html
+      lang="en"
+      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      suppressHydrationWarning
+    >
+      <head>
+        {/* Runs before first paint. Anything deferred would let the browser
+            paint the wrong palette first, so a visitor who chose dark gets a
+            white flash on every navigation. */}
+        <script dangerouslySetInnerHTML={{ __html: themeBootScript(theme) }} />
+      </head>
       <body>
         <a
           href="#main"

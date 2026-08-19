@@ -5,6 +5,7 @@ import { SESSION_COOKIE, verifySession } from '@/lib/auth/session';
 import { getContentUncached, hasStoredContent } from '@/lib/content/source';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Editor } from '@/components/admin/editor';
+import { ThemeToggle } from '@/components/theme-toggle';
 import { logout } from '@/app/admin/actions';
 
 export const metadata: Metadata = {
@@ -37,6 +38,10 @@ export default async function AdminPage() {
         </div>
 
         <div className="flex items-center gap-6">
+          {/* Lets the owner work in whichever palette suits the room. It is the
+              same control and the same storage key as the public site, so a
+              choice made here follows them there. */}
+          <ThemeToggle siteDefault={content.theme} className="-ml-1.5" />
           <a
             href="/"
             target="_blank"
