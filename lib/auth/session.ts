@@ -1,60 +1,141 @@
-// Imported from subpaths rather than the package root on purpose. The barrel
-// export pulls in JWE decryption, which reaches CompressionStream — a Node API
-// the Edge runtime does not have. We only ever sign and verify JWS, so that
-// code is never executed, but the bundler still traces it into the middleware
-// bundle and warns. These two imports carry only what is used.
-import { SignJWT } from 'jose/jwt/sign';
-import { jwtVerify } from 'jose/jwt/verify';
-
 /**
- * Session issuing and verification.
+ * Session issuing and verification — HS256 JWTs on Web Crypto, no dependencies.
  *
- * EDGE-SAFE ON PURPOSE. This module must never import node:crypto, directly or
- * transitively, because middleware.ts imports it and middleware runs on the
- * Edge runtime — where a `node:` import is not a runtime error but a build
- * failure. Password checking, which does need node:crypto, lives in the
- * sibling ./password module and is imported only from Node-runtime code.
+ * WHY NOT jose. This module is imported by middleware.ts, which Vercel compiles
+ * into an Edge Function through its own bundler. That bundler could not resolve
+ * jose's subpath exports (`jose/jwt/sign`), and left them as unbundled
+ * externals, failing the deploy with "referencing unsupported modules". The
+ * package root would very likely bundle, but it reaches JWE and a
+ * CompressionStream reference that the Edge runtime does not have — which is
+ * the warning that prompted the subpath change in the first place. Rather than
+ * keep trading one of those for the other, the ~60 lines below use only Web
+ * Crypto, which the Edge runtime implements natively and no bundler has to
+ * resolve.
  *
- * That split is the whole reason these are two files rather than one.
+ * SECURITY NOTES, because hand-rolled JWT is where people get hurt:
+ *   - The algorithm is pinned to HS256. The token's own `alg` header is checked
+ *     against it and rejected on mismatch, so neither `none` nor an asymmetric
+ *     algorithm can be substituted. The header is never used to *select* the
+ *     verification algorithm.
+ *   - The signature is verified before any claim is read, so a forged payload
+ *     is never parsed, let alone trusted.
+ *   - crypto.subtle.verify does the comparison, which is constant-time.
+ *   - Expiry is required. A token with no `exp` is rejected rather than treated
+ *     as eternal.
+ *
+ * The output is a standard compact JWS, verified byte-for-byte against jose in
+ * the test suite, so this stays interoperable with the wider ecosystem.
  */
 
 export const SESSION_COOKIE = 'mpc_admin_session';
 const SESSION_TTL_SECONDS = 60 * 60 * 24 * 7; // one week
 
-/** Throws at call time rather than import time, so a missing env var surfaces
- *  as a clear runtime error rather than a blank page at startup. */
-function secretKey(): Uint8Array {
-  const secret = process.env.AUTH_SECRET;
-  if (!secret) {
-    throw new Error('AUTH_SECRET is not set. See .env.local.');
-  }
-  return new TextEncoder().encode(secret);
+export type Session = { sub: string; iat: number; exp: number };
+
+/* ── base64url ──────────────────────────────────────────────────────────── */
+
+function toBase64Url(bytes: Uint8Array): string {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
 }
 
-export type Session = { sub: string; iat: number; exp: number };
+function fromBase64Url(value: string) {
+  const padded = value.replace(/-/g, '+').replace(/_/g, '/');
+  const binary = atob(padded + '='.repeat((4 - (padded.length % 4)) % 4));
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i += 1) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+
+/* ── Key ────────────────────────────────────────────────────────────────── */
+
+/** Throws at call time rather than import time, so a missing env var surfaces
+ *  as a clear runtime error rather than a blank page at startup. */
+function secretBytes() {
+  const secret = process.env.AUTH_SECRET;
+  if (!secret) throw new Error('AUTH_SECRET is not set. See .env.local.');
+  return encoder.encode(secret);
+}
+
+async function hmacKey(usage: 'sign' | 'verify'): Promise<CryptoKey> {
+  return crypto.subtle.importKey(
+    'raw',
+    secretBytes(),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    [usage],
+  );
+}
+
+/* ── Issue ──────────────────────────────────────────────────────────────── */
 
 export async function createSession(username: string): Promise<string> {
   const now = Math.floor(Date.now() / 1000);
-  return new SignJWT({})
-    .setProtectedHeader({ alg: 'HS256' })
-    .setSubject(username)
-    .setIssuedAt(now)
-    .setExpirationTime(now + SESSION_TTL_SECONDS)
-    .sign(secretKey());
+
+  const header = toBase64Url(encoder.encode(JSON.stringify({ alg: 'HS256', typ: 'JWT' })));
+  const payload = toBase64Url(
+    encoder.encode(JSON.stringify({ sub: username, iat: now, exp: now + SESSION_TTL_SECONDS })),
+  );
+
+  const signingInput = `${header}.${payload}`;
+  const signature = await crypto.subtle.sign(
+    'HMAC',
+    await hmacKey('sign'),
+    encoder.encode(signingInput),
+  );
+
+  return `${signingInput}.${toBase64Url(new Uint8Array(signature))}`;
 }
+
+/* ── Verify ─────────────────────────────────────────────────────────────── */
 
 /**
  * Returns the session, or null for anything that is not a currently valid
  * token. Never throws — callers treat null as "not signed in", and a missing
  * AUTH_SECRET must read as "nobody is signed in" rather than crashing every
- * request through middleware.
+ * request that passes through middleware.
  */
 export async function verifySession(token: string | undefined): Promise<Session | null> {
   if (!token) return null;
+
   try {
-    const { payload } = await jwtVerify(token, secretKey(), { algorithms: ['HS256'] });
-    if (!payload.sub) return null;
-    return payload as unknown as Session;
+    const parts = token.split('.');
+    if (parts.length !== 3) return null;
+
+    const [header, payload, signature] = parts;
+
+    // Pin the algorithm. Reading `alg` to decide how to verify is the classic
+    // JWT vulnerability; here it is only ever compared against the one value
+    // this system issues.
+    const parsedHeader = JSON.parse(decoder.decode(fromBase64Url(header))) as {
+      alg?: unknown;
+    };
+    if (parsedHeader.alg !== 'HS256') return null;
+
+    const valid = await crypto.subtle.verify(
+      'HMAC',
+      await hmacKey('verify'),
+      fromBase64Url(signature),
+      encoder.encode(`${header}.${payload}`),
+    );
+    if (!valid) return null;
+
+    // Only now is the payload trusted enough to read.
+    const claims = JSON.parse(decoder.decode(fromBase64Url(payload))) as Partial<Session>;
+
+    if (typeof claims.sub !== 'string' || claims.sub === '') return null;
+    if (typeof claims.exp !== 'number') return null;
+    if (claims.exp <= Math.floor(Date.now() / 1000)) return null;
+
+    return {
+      sub: claims.sub,
+      iat: typeof claims.iat === 'number' ? claims.iat : 0,
+      exp: claims.exp,
+    };
   } catch {
     return null;
   }
@@ -67,6 +148,8 @@ export const sessionCookieOptions = {
   path: '/',
   maxAge: SESSION_TTL_SECONDS,
 };
+
+/* ── Redirect safety ────────────────────────────────────────────────────── */
 
 /**
  * Resolves the post-login `next` target to a safe same-site admin path.
