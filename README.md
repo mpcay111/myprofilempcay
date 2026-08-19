@@ -199,6 +199,18 @@ Uploads go to Supabase Storage and are referenced by absolute URL. Screenshots
 still render at their natural aspect ratio — the no-cropping rule applies to
 uploaded images too.
 
+There are three separate image slots, all optional:
+
+| Slot | Admin tab | Where it appears |
+| --- | --- | --- |
+| **Profile photo** | Identity | Beside your name at the top of the page. Cropped square, so leave a little room around your head. When it is set, the name is scaled down a step so it still holds two lines rather than three. |
+| **Hero background** | Identity | Behind the whole opening screen, under a scrim. Usually better left empty. |
+| **Portrait** | About | The larger image in the About section. Cropped to a tall 4:5. |
+
+Removing an image from a slot does **not** delete it from storage — the object
+stays at its public URL. Delete it in the Supabase dashboard under
+**Storage → portfolio-media** if you want it actually gone.
+
 Images already in `public/projects/` keep working; the two systems coexist, and
 `lib/image-sizes.ts` covers the local ones.
 

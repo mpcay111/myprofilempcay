@@ -23,7 +23,7 @@ export const CONTENT_TAG = 'site-content';
 /** The content compiled into the repo, shaped to the schema. */
 export function seedContent(): SiteContent {
   const parsed = siteContentSchema.safeParse({
-    identity: { ...seed.identity, backgroundImage: null },
+    identity: { ...seed.identity, photo: null, backgroundImage: null },
     email: seed.email,
     phone: seed.phone,
     showPhone: seed.showPhone,
@@ -105,6 +105,29 @@ export async function getContent(): Promise<SiteContent> {
  *  possibly stale copy, or it would save edits on top of old data. */
 export async function getContentUncached(): Promise<SiteContent> {
   return (await readFromDatabase()) ?? seedContent();
+}
+
+/**
+ * Whether a document has ever been saved.
+ *
+ * Distinguishes "the site is showing the seed because nobody has saved yet"
+ * from "the site is showing the seed because the database is unreachable".
+ * The admin needs that distinction: on a fresh install the content on screen
+ * is identical to the seed, so a dirty check alone would leave the Save button
+ * disabled and there would be no way to perform the very first save.
+ */
+export async function hasStoredContent(): Promise<boolean> {
+  if (!isSupabaseConfigured()) return false;
+  try {
+    const { data, error } = await supabaseAdmin()
+      .from('site_content')
+      .select('id')
+      .eq('id', 1)
+      .maybeSingle();
+    return !error && Boolean(data);
+  } catch {
+    return false;
+  }
 }
 
 /**

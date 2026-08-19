@@ -1,4 +1,10 @@
-import { SignJWT, jwtVerify } from 'jose';
+// Imported from subpaths rather than the package root on purpose. The barrel
+// export pulls in JWE decryption, which reaches CompressionStream — a Node API
+// the Edge runtime does not have. We only ever sign and verify JWS, so that
+// code is never executed, but the bundler still traces it into the middleware
+// bundle and warns. These two imports carry only what is used.
+import { SignJWT } from 'jose/jwt/sign';
+import { jwtVerify } from 'jose/jwt/verify';
 
 /**
  * Session issuing and verification.
@@ -61,3 +67,41 @@ export const sessionCookieOptions = {
   path: '/',
   maxAge: SESSION_TTL_SECONDS,
 };
+
+/**
+ * Resolves the post-login `next` target to a safe same-site admin path.
+ *
+ * The obvious guard — `startsWith('/') && !startsWith('//')` — is a string
+ * test, and the browser does not use string tests. For a special scheme the
+ * URL parser treats the backslash in `/\evil.com` as a second slash, so that
+ * value passes a `//` check and still resolves to `https://evil.com`. Tab, CR
+ * and LF are stripped before parsing, so `/%09/evil.com` does the same.
+ *
+ * That matters more here than the usual open-redirect case: the victim is the
+ * one admin, the bounce happens the instant after they type a password that
+ * has just been proven correct on the genuine domain, and the destination is a
+ * clone asking them to "sign in again". There is no second account and no MFA
+ * behind that password.
+ *
+ * So: resolve against a sentinel origin and compare origins, which runs the
+ * same parser the browser will. Then require the result to be inside /admin —
+ * nothing else is a useful place to land after signing in.
+ */
+export function safeNext(raw: unknown): string {
+  const value = Array.isArray(raw) ? raw[0] : raw;
+  if (typeof value !== 'string' || value === '') return '/admin';
+
+  const base = 'https://sentinel.invalid';
+  let url: URL;
+  try {
+    url = new URL(value, base);
+  } catch {
+    return '/admin';
+  }
+
+  // Any value that escapes the sentinel origin was going off-site.
+  if (url.origin !== base) return '/admin';
+  if (!url.pathname.startsWith('/admin')) return '/admin';
+
+  return url.pathname + url.search;
+}

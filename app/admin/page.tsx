@@ -2,7 +2,7 @@ import type { Metadata } from 'next';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { SESSION_COOKIE, verifySession } from '@/lib/auth/session';
-import { getContentUncached } from '@/lib/content/source';
+import { getContentUncached, hasStoredContent } from '@/lib/content/source';
 import { isSupabaseConfigured } from '@/lib/supabase';
 import { Editor } from '@/components/admin/editor';
 import { logout } from '@/app/admin/actions';
@@ -24,6 +24,7 @@ export default async function AdminPage() {
 
   const content = await getContentUncached();
   const configured = isSupabaseConfigured();
+  const persisted = configured && (await hasStoredContent());
 
   return (
     <main className="container-grid py-10">
@@ -76,7 +77,7 @@ export default async function AdminPage() {
       )}
 
       <div className="mt-10">
-        <Editor initial={content} />
+        <Editor initial={content} persisted={persisted} />
       </div>
     </main>
   );

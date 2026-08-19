@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { LoginForm } from '@/components/admin/login-form';
+import { safeNext } from '@/lib/auth/session';
 
 export const metadata: Metadata = {
   title: 'Sign in',
@@ -11,15 +12,11 @@ export const metadata: Metadata = {
 export default function LoginPage({
   searchParams,
 }: {
-  searchParams: { next?: string };
+  // A repeated ?next= arrives as an array; safeNext handles that rather than
+  // letting `.startsWith` throw and turn the sign-in page into a 500.
+  searchParams: { next?: string | string[] };
 }) {
-  // Only a same-site path is ever carried through. Anything else — an absolute
-  // URL, a protocol-relative //host — is discarded rather than sanitised, so
-  // this cannot become an open redirect.
-  const next =
-    searchParams.next?.startsWith('/') && !searchParams.next.startsWith('//')
-      ? searchParams.next
-      : '/admin';
+  const next = safeNext(searchParams.next);
 
   return (
     <main className="flex min-h-screen items-center justify-center px-5 py-16">

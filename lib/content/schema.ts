@@ -44,6 +44,11 @@ export const identitySchema = z.object({
   siteUrl: z.string().trim().url('Must be a full URL, e.g. https://example.com'),
   availableForWork: z.boolean(),
   availabilityNote: nullableText,
+  /**
+   * Profile photo, shown beside the name at the top of the page.
+   * Distinct from `about.portrait`, which is the larger image further down.
+   */
+  photo: imageRef.default(null),
   /** Optional hero background image. Null keeps the plain paper ground. */
   backgroundImage: imageRef.default(null),
 });

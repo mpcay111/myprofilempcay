@@ -80,8 +80,19 @@ export function Hero({ content }: { content: SiteContent }) {
           {/* Content well. */}
           <div className="mt-8 lg:col-span-10 lg:mt-0">
             <div className="lg:grid lg:grid-cols-10 lg:gap-x-8">
-              <div className="lg:col-span-7">
-                <h1 className="text-[clamp(2.75rem,7vw,5.5rem)] font-semibold leading-[0.92] tracking-[-0.04em]">
+              {(() => {
+                /* The name is the largest type on the page and already wraps at
+                   desktop width. Standing a photo beside it takes ~130px out of
+                   that measure, which would push it to three lines — so the
+                   clamp is scaled back only when a photo is actually present.
+                   With no photo the original size and markup are unchanged. */
+                const nameSize = identity.photo
+                  ? 'text-[clamp(2.25rem,5vw,4.25rem)] font-semibold leading-[0.94] tracking-[-0.035em]'
+                  : 'text-[clamp(2.75rem,7vw,5.5rem)] font-semibold leading-[0.92] tracking-[-0.04em]';
+
+                const nameBlock = (
+                  <>
+                <h1 className={nameSize}>
                   {identity.name}
                   {identity.credentials && (
                     /* `align-top` pins the post-nominal to the top of the line
@@ -104,6 +115,37 @@ export function Hero({ content }: { content: SiteContent }) {
                 <p className="mt-6 text-[1.25rem] font-medium tracking-[-0.01em] text-foreground sm:text-[1.5rem]">
                   {identity.role}
                 </p>
+              </>
+            );
+
+            return (
+              <div className="lg:col-span-7">
+                {identity.photo ? (
+                  <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:gap-7">
+                    {/* Square with a hairline, not a circle: the availability
+                        dot is the only rounded thing on this site, and a round
+                        avatar would read as a social profile rather than a
+                        document.
+
+                        alt is empty on purpose — the name is immediately
+                        beside it, and describing the photo would make a screen
+                        reader announce the same person twice. */}
+                    <div className="shrink-0 self-start border border-border bg-surface">
+                      <Image
+                        src={identity.photo}
+                        alt=""
+                        width={480}
+                        height={480}
+                        priority
+                        sizes="(min-width: 640px) 128px, 96px"
+                        className="h-24 w-24 object-cover sm:h-32 sm:w-32"
+                      />
+                    </div>
+                    <div className="min-w-0">{nameBlock}</div>
+                  </div>
+                ) : (
+                  nameBlock
+                )}
 
                 {disciplines.length > 0 && (
                   <ul role="list" className="mt-5 flex flex-wrap items-center gap-x-3 gap-y-2">
@@ -165,6 +207,8 @@ export function Hero({ content }: { content: SiteContent }) {
                   )}
                 </div>
               </div>
+                );
+              })()}
 
               {/* The spec block — the datasheet idea, stated on arrival.
                   Figures are derived, never typed: the systems count follows

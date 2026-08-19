@@ -5,6 +5,7 @@ import { redirect } from 'next/navigation';
 import {
   SESSION_COOKIE,
   createSession,
+  safeNext,
   sessionCookieOptions,
   verifySession,
 } from '@/lib/auth/session';
@@ -36,7 +37,7 @@ export async function login(
 ): Promise<LoginState> {
   const username = String(formData.get('username') ?? '');
   const password = String(formData.get('password') ?? '');
-  const next = String(formData.get('next') ?? '/admin');
+  const next = safeNext(formData.get('next'));
 
   const ip = clientIp(headers());
 
@@ -69,9 +70,10 @@ export async function login(
 
   cookies().set(SESSION_COOKIE, await createSession(username), sessionCookieOptions);
 
-  // Only ever redirect to a path on this site. Accepting an absolute URL here
-  // would make the login form an open redirect.
-  redirect(next.startsWith('/') && !next.startsWith('//') ? next : '/admin');
+  // Re-resolved rather than trusted: the hidden field is attacker-controllable
+  // regardless of what the page rendered, so this must not assume the page
+  // already sanitised it.
+  redirect(next);
 }
 
 export async function logout(): Promise<void> {

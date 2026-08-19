@@ -172,6 +172,15 @@ export function IdentityEditor({ content, onChange }: SectionEditorProps) {
         </Field>
       </Panel>
 
+      <Panel title="Profile photo">
+        <ImageField
+          label="Profile photo"
+          hint="Shown beside your name at the top of the page. It is cropped to a square, so a head-and-shoulders shot with a little room around your head works best. Leave empty for no photo."
+          value={identity.photo}
+          onChange={(v) => setIdentity('photo', v)}
+        />
+      </Panel>
+
       <Panel title="Hero background">
         <ImageField
           label="Background image"

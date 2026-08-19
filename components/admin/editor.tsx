@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import type { SiteContent } from '@/lib/content/schema';
 import { saveContentAction, type SaveState } from '@/app/admin/actions';
@@ -42,20 +42,27 @@ const TABS = [
 
 const initialSaveState: SaveState = { ok: false, message: null };
 
-function SaveButton({ dirty }: { dirty: boolean }) {
+function SaveButton({ enabled, label }: { enabled: boolean; label: string }) {
   const { pending } = useFormStatus();
   return (
     <button
       type="submit"
-      disabled={pending || !dirty}
+      disabled={pending || !enabled}
       className="border border-border-strong px-5 py-2.5 text-[0.9375rem] font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent disabled:cursor-not-allowed disabled:opacity-40"
     >
-      {pending ? 'Saving…' : dirty ? 'Save changes' : 'Saved'}
+      {pending ? 'Saving…' : label}
     </button>
   );
 }
 
-export function Editor({ initial }: { initial: SiteContent }) {
+export function Editor({
+  initial,
+  persisted,
+}: {
+  initial: SiteContent;
+  /** False until the first successful save. See hasStoredContent(). */
+  persisted: boolean;
+}) {
   const [content, setContent] = useState<SiteContent>(initial);
   const [active, setActive] = useState<(typeof TABS)[number]['id']>('identity');
   const [state, formAction] = useFormState(saveContentAction, initialSaveState);
@@ -65,6 +72,19 @@ export function Editor({ initial }: { initial: SiteContent }) {
   // dirty flag through every nested setter.
   const serialised = useMemo(() => JSON.stringify(content), [content]);
   const dirty = serialised !== JSON.stringify(initial);
+
+  // On a fresh database the editor shows the seed content, so nothing is dirty
+  // and a dirty-only check would disable the one button needed to perform the
+  // very first save. Saving is therefore also allowed while nothing is stored.
+  const [saved, setSaved] = useState(false);
+  useEffect(() => {
+    // Once a save succeeds there is a row, so the first-save affordance retires
+    // for the rest of this session without needing a page reload.
+    if (state.ok) setSaved(true);
+  }, [state.ok]);
+
+  const stored = persisted || saved;
+  const canSave = dirty || !stored;
 
   const ActiveEditor = TABS.find((t) => t.id === active)!.Component;
 
@@ -108,7 +128,13 @@ export function Editor({ initial }: { initial: SiteContent }) {
 
         <div className="container-grid flex flex-wrap items-center justify-between gap-4 py-4">
           <div className="min-w-0 flex-1">
-            {state.message ? (
+            {!stored && !state.message ? (
+              <p className="text-[0.875rem] leading-[1.45] text-muted">
+                Nothing saved yet — press Save to write this content into the
+                database. Until then the site is reading the copy compiled into
+                the repo.
+              </p>
+            ) : state.message ? (
               <p
                 role="status"
                 aria-live="polite"
@@ -120,9 +146,7 @@ export function Editor({ initial }: { initial: SiteContent }) {
                 {state.message}
               </p>
             ) : (
-              <p className="label">
-                {dirty ? 'Unsaved changes' : 'No changes'}
-              </p>
+              <p className="label">{dirty ? 'Unsaved changes' : 'No changes'}</p>
             )}
           </div>
 
@@ -134,7 +158,10 @@ export function Editor({ initial }: { initial: SiteContent }) {
               aria-label="Revision note"
               className="hidden w-56 border-b border-border bg-transparent pb-1.5 text-[0.875rem] text-foreground outline-none transition-colors focus:border-accent sm:block"
             />
-            <SaveButton dirty={dirty} />
+            <SaveButton
+              enabled={canSave}
+              label={!stored ? 'Save to database' : dirty ? 'Save changes' : 'Saved'}
+            />
           </div>
         </div>
       </form>
