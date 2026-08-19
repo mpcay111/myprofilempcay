@@ -1,5 +1,10 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { SESSION_COOKIE, verifySession } from '@/lib/auth/session';
+// Relative, not the '@/' alias, and deliberately so. Middleware is compiled
+// into an Edge Function by a separate bundler pass, and if the tsconfig alias
+// map is not applied there the specifier survives as an unresolved external —
+// which fails the build with "referencing unsupported modules". A relative
+// path needs no alias map, so this entry point cannot break that way again.
+import { SESSION_COOKIE, verifySession } from './lib/auth/session';
 
 /**
  * Gates every /admin route behind a valid session.
