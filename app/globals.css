@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/**
+ * DATUM — a technical register, not a brochure.
+ *
+ * Contrast ratios below were computed against WCAG 2.x relative luminance.
+ * If you change a colour, recompute — `subtle` in particular is used for the
+ * 11px mono labels and was deliberately tuned to clear 4.5:1 rather than being
+ * treated as decorative.
+ */
+
+:root {
+  --background: 38 32% 97%; /* #FAF8F5 — warm paper, not framework grey */
+  --surface: 40 40% 99%;
+  --foreground: 206 22% 12%; /* 15.63:1 — cool ink against the warm ground */
+  --muted: 208 11% 38%; /*  5.92:1 */
+  --subtle: 208 10% 43%; /*  4.89:1 — smallest text on the site */
+  --border: 36 18% 87%; /* decorative hairlines only (1.25:1) */
+  --border-strong: 36 12% 54%; /*  3.09:1 — semantic borders, focus fallback */
+  --accent: 176 78% 24%; /*  5.83:1 — deep teal, echoing his own Portal UI */
+  --accent-foreground: 0 0% 100%; /*  6.18:1 on accent */
+}
+
+/* Follows the OS when the visitor has expressed no explicit preference. */
+@media (prefers-color-scheme: dark) {
+  :root:not(.light) {
+    --background: 206 24% 8%; /* #101519 */
+    --surface: 206 20% 11%;
+    --foreground: 40 18% 95%; /* 16.57:1 — warm ink on cool ground, inverted */
+    --muted: 208 12% 71%; /*  8.89:1 */
+    --subtle: 208 11% 62%; /*  6.79:1 */
+    --border: 206 14% 21%;
+    --border-strong: 206 12% 44%; /*  3.70:1 */
+    --accent: 172 62% 58%; /* 10.33:1 */
+    --accent-foreground: 206 24% 8%; /* 10.33:1 on accent */
+  }
+}
+
+/* Explicit override, for when you add a theme toggle later. */
+.dark {
+  --background: 206 24% 8%;
+  --surface: 206 20% 11%;
+  --foreground: 40 18% 95%;
+  --muted: 208 12% 71%;
+  --subtle: 208 11% 62%;
+  --border: 206 14% 21%;
+  --border-strong: 206 12% 44%;
+  --accent: 172 62% 58%;
+  --accent-foreground: 206 24% 8%;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    -webkit-text-size-adjust: 100%;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans antialiased;
+    /* Tabular figures everywhere so every number in every table lines up. */
+    font-feature-settings: 'tnum' 1, 'cv05' 1;
+  }
+
+  /* Anchor targets clear the 56px sticky bar. */
+  section[id] {
+    scroll-margin-top: 5rem;
+  }
+
+  /**
+   * Sequential focus has to clear it too. Without this, tabbing to a control
+   * just below the viewport top scrolls it minimally into view and parks it
+   * behind the sticky header — WCAG 2.2 SC 2.4.11 Focus Not Obscured.
+   */
+  a,
+  button,
+  [tabindex]:not([tabindex='-1']) {
+    scroll-margin-top: 5rem;
+  }
+
+  ::selection {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  :focus-visible {
+    @apply outline-none ring-2 ring-accent ring-offset-2 ring-offset-background;
+  }
+}
+
+@layer components {
+  /**
+   * The signature label style. Never smaller than 11px, never below 4.95:1.
+   */
+  .label {
+    @apply font-mono text-[0.6875rem] font-medium uppercase leading-none tracking-label text-subtle;
+  }
+
+  /**
+   * Unfilled [bracketed] copy from content/profile.ts.
+   *
+   * Placeholders stay visible on the page on purpose — you cannot fill in what
+   * you cannot see — but they are marked so they are never mistaken for
+   * finished writing. Delete nothing: replace the text in content/profile.ts
+   * and the marking disappears with it.
+   */
+  .ph {
+    @apply text-subtle decoration-accent/50 decoration-dotted underline-offset-4;
+    text-decoration-line: underline;
+  }
+
+  .container-grid {
+    @apply mx-auto w-full max-w-container px-5 sm:px-8 lg:px-12;
+  }
+}

@@ -1,0 +1,63 @@
+import type { ReactNode } from 'react';
+import { Rule } from '@/components/rule';
+
+type SectionProps = {
+  id: string;
+  /** Zero-padded index, e.g. "02". */
+  index: string;
+  title: string;
+  /** Optional short line under the section title. */
+  standfirst?: string;
+  children: ReactNode;
+};
+
+/**
+ * Every section shares one structure: a full-bleed hairline, then a reserved
+ * two-column gutter at lg carrying the monospace register (index, section mark)
+ * on a vertical rule, with content always beginning at column 3.
+ *
+ * That gutter is what makes six structurally unlike sections read as one
+ * document. Below lg it collapses into a single horizontal mono line, which
+ * keeps the information without pretending the column still exists.
+ */
+export function Section({ id, index, title, standfirst, children }: SectionProps) {
+  return (
+    <section id={id} className="scroll-mt-20">
+      <Rule />
+
+      <div className="container-grid py-24 md:py-32 lg:py-40">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">
+          {/* Index gutter — the spine. */}
+          <div className="lg:col-span-2">
+            {/* The spine is a visual device only — the section already has a
+                real <h2>, so reading "02, section Experience" before it just
+                doubles the announcement. */}
+            <div
+              aria-hidden="true"
+              className="flex items-baseline gap-3 lg:sticky lg:top-24 lg:block lg:border-l lg:border-border lg:pl-4"
+            >
+              <span className="label text-accent">{index}</span>
+              <span className="label lg:mt-3 lg:block">§ {title}</span>
+            </div>
+            <div className="mt-4 lg:hidden">
+              <Rule />
+            </div>
+          </div>
+
+          {/* Content well. */}
+          <div className="mt-8 lg:col-span-10 lg:mt-0">
+            <h2 className="max-w-[20ch] text-[clamp(2rem,4vw,3.25rem)] font-semibold leading-[0.98] tracking-[-0.03em]">
+              {title}
+            </h2>
+            {standfirst && (
+              <p className="mt-5 max-w-prose text-[1.0625rem] leading-[1.6] text-muted md:text-[1.125rem]">
+                {standfirst}
+              </p>
+            )}
+            <div className="mt-12 md:mt-16">{children}</div>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
