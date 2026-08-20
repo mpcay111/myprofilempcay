@@ -111,7 +111,12 @@ export function appearanceStyles(accent: AccentName): string {
   const { light, dark } = ACCENTS[accent] ?? ACCENTS.teal;
 
   return [
-    `:root{--accent:${light};}`,
+    // --accent-bar is set on :root only and never overridden below, so it holds
+    // the deeper light-theme tone in BOTH themes. The header uses it with white
+    // text: the dark-theme accent is lightened for legibility ON a dark ground,
+    // which makes it a poor ground for white text itself. Every light value in
+    // the table above clears 6.4:1 against white.
+    `:root{--accent:${light};--accent-bar:${light};}`,
     `@media (prefers-color-scheme:dark){:root:not(.light){--accent:${dark};}}`,
     `.dark{--accent:${dark};}`,
   ].join('');

@@ -19,6 +19,7 @@ const config: Config = {
         'border-strong': 'hsl(var(--border-strong) / <alpha-value>)',
         accent: 'hsl(var(--accent) / <alpha-value>)',
         'accent-foreground': 'hsl(var(--accent-foreground) / <alpha-value>)',
+        'accent-bar': 'hsl(var(--accent-bar) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],

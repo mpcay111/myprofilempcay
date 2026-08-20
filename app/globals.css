@@ -20,6 +20,10 @@
   --border: 36 18% 87%; /* decorative hairlines only (1.25:1) */
   --border-strong: 36 12% 54%; /*  3.09:1 — semantic borders, focus fallback */
   --accent: 176 78% 24%; /*  5.83:1 — deep teal, echoing his own Portal UI */
+  /* The header ground. Deliberately NOT redefined in the dark blocks below —
+     it stays this deep tone in both themes so the white text on it keeps its
+     contrast. lib/appearance.ts overrides it to match the chosen accent. */
+  --accent-bar: 176 78% 24%;
   --accent-foreground: 0 0% 100%; /*  6.18:1 on accent */
 }
 

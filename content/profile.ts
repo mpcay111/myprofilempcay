@@ -108,7 +108,7 @@ export type AboutContent = {
 export const identity: Identity = {
   name: 'Mark Anthony Cayanan',
   credentials: 'CLSSGB',
-  role: 'E-commerce Operations Director',
+  role: 'Chief Operating Officer',
   disciplines: ['Process Development', 'People Leadership', 'Systems & Data'],
   location: 'Quezon City, Philippines',
   statement:
@@ -416,7 +416,6 @@ export const experience: ExperienceEntry[] = [
       'Eight-plus years in e-commerce, progressing from front-line agent to Subject Matter Expert to Team Leader.',
     highlights: [
       'Progressed from Agent to Subject Matter Expert to Team Leader during an 8+ year e-commerce tenure.',
-      '[Eight years is a long time to leave at one line. What were you SME for? How large was the team you led? Any award, ranking, or account you are known for? Two specifics here would strengthen the whole timeline.]',
     ],
     tags: ['Customer service', 'Subject matter expertise', 'Team leadership'],
     highlight: {

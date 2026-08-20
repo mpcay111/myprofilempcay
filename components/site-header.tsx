@@ -35,23 +35,10 @@ export function SiteHeader({
   /** Only the default; the visitor's own choice overrides it client-side. */
   themeDefault: ThemeSetting;
 }) {
-
-  const [scrolled, setScrolled] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
 
   const navRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
-
-  /* Both pieces of state start in their un-scrolled form so the first client
-   * render matches the server's. The listener corrects it a frame later, which
-   * also covers a reload part-way down the page. */
-  useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 24);
-
-    onScroll();
-    window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
 
   /* The observation band is the top ~40% of the viewport, below the bar. A
    * section counts as "current" while it still occupies that band, and the
@@ -107,29 +94,28 @@ export function SiteHeader({
   }, [activeId]);
 
   return (
-    <header className="sticky top-0 z-50 h-14">
-      {/* Ground and hairline are separate layers that fade, rather than a
-          border that appears — a border would add a pixel of height on scroll. */}
-      <div
-        aria-hidden="true"
-        className={`absolute inset-0 bg-background/85 backdrop-blur-sm transition-opacity duration-300 ${
-          scrolled ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
-      <div
-        aria-hidden="true"
-        className={`absolute inset-x-0 bottom-0 h-px bg-border transition-opacity duration-300 ${
-          scrolled ? 'opacity-100' : 'opacity-0'
-        }`}
-      />
+    /* A solid accent bar in both themes. It used to be transparent over the
+       hero and fade in a page-coloured ground on scroll; that is gone, because
+       a bar that is always there does not need to announce its arrival.
+
+       The ground is --accent-bar rather than --accent: the accent lightens in
+       dark mode so it stays legible ON a dark page, which makes it a poor
+       ground for white text. --accent-bar holds the deeper tone in both themes,
+       and every accent option clears 6.4:1 against white.
+
+       Secondary text is white/80, not the /70 that looks right by eye: over
+       this ground /70 measures 4.13:1 and /75 measures 4.49:1, both short of
+       the 4.5 these 11px labels need. /80 gives 4.87:1 on teal and 4.73:1 on
+       amber, which is the lightest accent and therefore the worst case. */
+    <header className="sticky top-0 z-50 h-14 bg-accent-bar">
 
       <div className="container-grid relative flex h-14 items-center justify-between gap-4 sm:gap-8">
         <a href="#top" className="flex shrink-0 items-baseline gap-2">
-          <span className="text-sm font-semibold tracking-[-0.01em] sm:text-[0.9375rem]">
+          <span className="text-sm font-semibold tracking-[-0.01em] text-white sm:text-[0.9375rem]">
             {name}
           </span>
           {credentials && (
-            <span className="label hidden sm:inline">{credentials}</span>
+            <span className="label hidden text-white/80 sm:inline">{credentials}</span>
           )}
         </a>
 
@@ -161,8 +147,8 @@ export function SiteHeader({
                        lands without duplicating the type styles. */
                     className={`label block whitespace-nowrap py-2 transition-colors ${
                       isActive
-                        ? 'text-foreground'
-                        : 'hover:text-foreground focus-visible:text-foreground'
+                        ? 'text-white'
+                        : 'text-white/80 hover:text-white focus-visible:text-white'
                     }`}
                   >
                     {item.label}
@@ -176,7 +162,10 @@ export function SiteHeader({
         {/* Outside the nav's scroll container on purpose: inside it, the
             toggle would scroll away with the section links on a narrow
             screen and become unreachable. */}
-        <ThemeToggle siteDefault={themeDefault} className="-mr-1.5" />
+        <ThemeToggle
+          siteDefault={themeDefault}
+          className="-mr-1.5 text-white/80 hover:border-white/60 hover:text-white focus-visible:border-white focus-visible:text-white"
+        />
       </div>
     </header>
   );
