@@ -133,12 +133,21 @@ function Entry({ entry, current }: { entry: ExperienceEntry; current: boolean })
           </div>
         )}
 
-        <ul id={listId} role="list" className="mt-7 max-w-prose space-y-3">
+        <ul
+          id={listId}
+          role="list"
+          /* Real list markers rather than the hairline dash this used to draw
+             with a pseudo-element. The dash matched the site's hairline
+             language but did not read as a bullet, and an indented list of
+             ten reads faster than ten dashes. `marker:` keeps the dot in the
+             same subdued tone the dash had. */
+          className="mt-7 max-w-prose list-disc space-y-3 pl-5 marker:text-border-strong"
+        >
           {entry.highlights.map((highlight, i) => (
             <li
               key={highlight}
               hidden={!expanded && !opensVisible(highlight, i)}
-              className="relative pl-6 text-[0.9375rem] leading-[1.55] text-muted before:absolute before:left-0 before:top-[0.7em] before:h-px before:w-3 before:bg-border-strong before:content-['']"
+              className="pl-1.5 text-[0.9375rem] leading-[1.55] text-muted"
             >
               <Copy>{highlight}</Copy>
             </li>
