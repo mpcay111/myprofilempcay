@@ -34,6 +34,7 @@ const emptyEntry = (): ExperienceEntry => ({
   summary: '',
   highlights: [],
   tags: [],
+  highlight: null,
 });
 
 const cardTitle = (entry: ExperienceEntry) =>
@@ -44,6 +45,14 @@ export function ExperienceEditor({ content, onChange }: SectionEditorProps) {
 
   const setEntries = (next: ExperienceEntry[]) => {
     onChange({ ...content, experience: next });
+  };
+
+  /* Both fields empty means "no highlight", stored as null rather than a pair
+   * of empty strings — otherwise the schema would reject the save and the
+   * message would point at a field the owner deliberately left blank. */
+  const setHighlight = (index: number, title: string, body: string) => {
+    const highlight = title.trim() === '' && body.trim() === '' ? null : { title, body };
+    setEntries(entries.map((e, i) => (i === index ? { ...e, highlight } : e)));
   };
 
   const patch = (index: number, changes: Partial<ExperienceEntry>) => {
@@ -168,6 +177,45 @@ export function ExperienceEditor({ content, onChange }: SectionEditorProps) {
               />
             )}
           </Field>
+
+              <Field
+                label="Signature work — heading"
+                hint="The one thing from this role worth reading if someone reads nothing else. A short line: what changed, not what you were responsible for. Leave both fields blank for no highlight."
+              >
+                {(id) => (
+                  <TextInput
+                    id={id}
+                    value={entry.highlight?.title ?? ''}
+                    onChange={(v) => setHighlight(index, v, entry.highlight?.body ?? '')}
+                    placeholder="Made dead air visible, and it fell"
+                  />
+                )}
+              </Field>
+
+              <Field
+                label="Signature work — story"
+                hint="Three or four sentences: the problem, what you built or changed, and what happened. Figures carry more than adjectives. **bold** and ==highlight== work here."
+              >
+                {(id) => (
+                  <TextArea
+                    id={id}
+                    rows={6}
+                    value={entry.highlight?.body ?? ''}
+                    onChange={(v) => setHighlight(index, entry.highlight?.title ?? '', v)}
+                  />
+                )}
+              </Field>
+
+              {entry.highlight &&
+                (entry.highlight.title.trim() === '' || entry.highlight.body.trim() === '') && (
+                  <p
+                    role="alert"
+                    className="border-l-2 border-accent pl-3 text-[0.875rem] leading-[1.45] text-muted"
+                  >
+                    A highlight needs both a heading and a story. Fill the other
+                    one in, or clear both to remove the highlight.
+                  </p>
+                )}
         </ItemCard>
       ))}
 

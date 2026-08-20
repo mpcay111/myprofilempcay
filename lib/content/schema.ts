@@ -79,6 +79,20 @@ export const projectSchema = z.object({
   featured: z.boolean(),
 });
 
+/**
+ * The one thing from a role worth reading if you read nothing else.
+ *
+ * The bullet list under each role answers "what did the job involve". This
+ * answers "what did you actually change", which is the question a reader is
+ * really asking and the one a responsibilities list never quite gets to.
+ */
+export const experienceHighlightSchema = z.object({
+  title: text.min(1),
+  body: text.min(1),
+});
+
+export type ExperienceHighlight = z.infer<typeof experienceHighlightSchema>;
+
 export const experienceEntrySchema = z.object({
   company: text.min(1),
   title: text.min(1),
@@ -88,6 +102,8 @@ export const experienceEntrySchema = z.object({
   summary: text,
   highlights: z.array(text),
   tags: z.array(text),
+  /** Null renders nothing — a role without a standout story is not padded. */
+  highlight: experienceHighlightSchema.nullable().default(null),
 });
 
 export const scopeAreaSchema = z.object({

@@ -116,6 +116,23 @@ function Entry({ entry, current }: { entry: ExperienceEntry; current: boolean })
           <Copy>{entry.summary}</Copy>
         </p>
 
+        {entry.highlight && (
+          /* The one story worth reading from this role, set apart from the
+             responsibilities list below it. The accent rule is the same device
+             the education entry and the in-place notices use — emphasis drawn
+             in a hairline rather than a filled panel, so it stays inside the
+             system while still stopping the eye. */
+          <div className="mt-7 max-w-prose border-l-2 border-accent pl-6">
+            <p className="label text-accent">Signature work</p>
+            <p className="mt-3 text-[1.0625rem] font-semibold leading-[1.35] tracking-[-0.01em] text-foreground md:text-[1.125rem]">
+              <Copy>{entry.highlight.title}</Copy>
+            </p>
+            <p className="mt-3 text-[0.9375rem] leading-[1.65] text-muted md:text-base">
+              <Copy>{entry.highlight.body}</Copy>
+            </p>
+          </div>
+        )}
+
         <ul id={listId} role="list" className="mt-7 max-w-prose space-y-3">
           {entry.highlights.map((highlight, i) => (
             <li

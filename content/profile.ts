@@ -78,6 +78,8 @@ export type ExperienceEntry = {
   summary: string;
   highlights: string[];
   tags: string[];
+  /** The one story worth reading from this role. null renders nothing. */
+  highlight: { title: string; body: string } | null;
 };
 
 export type ScopeArea = {
@@ -333,7 +335,7 @@ export const projects: Project[] = [
 export const experience: ExperienceEntry[] = [
   {
     company: 'PVGC',
-    title: 'Director of Operations — E-commerce',
+    title: 'Operations Manager → Chief Operating Officer',
     start: 'Oct 2025',
     end: 'Present',
     location: 'Quezon City, Philippines',
@@ -352,6 +354,10 @@ export const experience: ExperienceEntry[] = [
       'Led operational projects and rollouts to support growth and scalability.',
     ],
     tags: ['Operations', 'SOP', 'Fulfilment', 'Hiring', 'Reporting'],
+    highlight: {
+      title: 'Made the company scalable, and it got cheaper to run',
+      body: 'I joined a startup e-commerce company as Operations Manager with one mandate: make it possible to scale. That meant turning it into an actual organisation — processes that hold, systems people trust, data visible enough to decide on, and a culture that survives nobody watching. Operating expenditure is down **40%** while sales have risen, breaking monthly records against previous years, and the business keeps growing with fewer people. I am now ==Chief Operating Officer==.',
+    },
   },
   {
     company: 'Cusmiz',
@@ -372,6 +378,10 @@ export const experience: ExperienceEntry[] = [
       'Oversaw recruitment, onboarding, and HR functions to support team growth and maintain a strong organisational culture.',
     ],
     tags: ['Team building', 'KPIs', 'Print-on-Demand', 'HR', 'Stakeholder reporting'],
+    highlight: {
+      title: 'Built the Philippine operation from one employee',
+      body: 'I was hired as the ==first Filipino employee== of a Chinese e-commerce company to build their PH team from nothing — recruitment, SOPs, processes, training, KPIs, company policies, career paths, the internal systems, and then running the whole operation. The business grew continuously and opened new units on the back of it, and they sent me to work in China to understand the company end to end. I am still friends with the owners.',
+    },
   },
   {
     company: 'IntouchCX',
@@ -391,6 +401,10 @@ export const experience: ExperienceEntry[] = [
       'Coordinated with other departments to resolve employee issues and concerns.',
     ],
     tags: ['KPIs', 'SLAs', 'Coaching', 'Root-cause analysis'],
+    highlight: {
+      title: 'Gave five teams a fair share of every channel',
+      body: 'Five to seven teams handled phone, chat and email with no rule for who took what, so the split felt arbitrary and caused friction between them. I built a scheduling process that forecasts daily and monthly volume per channel from historical data, then distributes the work across teams on that basis. Operations became predictable and the arguments stopped.',
+    },
   },
   {
     company: 'Concentrix',
@@ -405,6 +419,10 @@ export const experience: ExperienceEntry[] = [
       '[Eight years is a long time to leave at one line. What were you SME for? How large was the team you led? Any award, ranking, or account you are known for? Two specifics here would strengthen the whole timeline.]',
     ],
     tags: ['Customer service', 'Subject matter expertise', 'Team leadership'],
+    highlight: {
+      title: 'Made dead air visible, and it fell',
+      body: 'Silence on calls was a scored KPI for every site serving the brand, and coaching alone was not moving it. The usual advice — keep talking, ask another question — traded silence for longer handle and hold time, which are scored too, and enforcing it across hundreds of agents was harder still. So I interviewed agents to find the real cause: they were not ignoring it, they simply could not see where they stood. I built ==real-time reporting== that showed each agent their current dead air alongside the minutes they had left to spend that day and week and still pass for the month. Silence dropped sharply and the site won awards for it. So did I — **best agent company-wide in my first month**, then best SME and best team leader several times over.',
+    },
   },
 ];
 
