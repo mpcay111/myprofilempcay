@@ -28,11 +28,17 @@ import type { SiteContent } from '@/lib/content/schema';
  * turned it into the generic feature grid the design exists to avoid — the
  * accent belongs to data and state.
  */
-export function Scope({ content }: { content: SiteContent }) {
+export function Scope({
+  content,
+  index,
+}: {
+  content: SiteContent;
+  index: string;
+}) {
   return (
     <Section
       id="scope"
-      index="03"
+      index={index}
       title="Operating Scope"
       standfirst="Eight functional areas owned directly — the operating surface of the business, from the SOP that defines a task through to the cash flow that follows it."
     >

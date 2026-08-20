@@ -1,7 +1,7 @@
 'use client';
 
 import type { SectionEditorProps } from '@/components/admin/editor';
-import type { NavItem, SocialLink } from '@/lib/content/schema';
+import type { SocialLink } from '@/lib/content/schema';
 import {
   Field,
   ItemCard,
@@ -13,7 +13,8 @@ import {
 } from '@/components/admin/ui';
 
 /**
- * Contact details, social links and the top navigation.
+ * Contact details and social links. Section order and the menu labels moved
+ * to their own tab once sections became reorderable.
  *
  * These three belong together because they are the parts of the page a reader
  * uses to go somewhere — an address, a link, a jump. All of them fail quietly
@@ -24,7 +25,6 @@ import {
 
 /** The section ids the public page actually renders. A nav item pointing
  *  anywhere else is not an error, it just never highlights — so we warn. */
-const SECTION_IDS = ['work', 'experience', 'scope', 'expertise', 'about', 'contact'];
 
 // New items are seeded with valid values rather than blanks. An empty string
 // fails the schema's min(1) and the nav id regex, so a blank default turns
@@ -35,7 +35,6 @@ const emptySocial = (): SocialLink => ({
   href: 'https://',
   handle: 'Your name',
 });
-const emptyNavItem = (): NavItem => ({ id: 'work', label: 'Work' });
 
 /** A placeholder like https://linkedin.com/in/[username] is still a template,
  *  and the public page renders those as plain text instead of a link. */
@@ -49,13 +48,9 @@ function Note({ children }: { children: string }) {
 
 export function ContactEditor({ content, onChange }: SectionEditorProps) {
   const setSocials = (socials: SocialLink[]) => onChange({ ...content, socials });
-  const setNavigation = (navigation: NavItem[]) => onChange({ ...content, navigation });
 
   const updateSocial = (index: number, patch: Partial<SocialLink>) =>
     setSocials(content.socials.map((s, i) => (i === index ? { ...s, ...patch } : s)));
-
-  const updateNavItem = (index: number, patch: Partial<NavItem>) =>
-    setNavigation(content.navigation.map((n, i) => (i === index ? { ...n, ...patch } : n)));
 
   return (
     <div>
@@ -172,70 +167,6 @@ export function ContactEditor({ content, onChange }: SectionEditorProps) {
         </SecondaryButton>
       </Panel>
 
-      <Panel title="Navigation">
-        {content.navigation.map((item, index) => {
-          const id = item.id.trim();
-          // Distinguish the two failures. A malformed id is rejected outright by
-          // the schema; a well-formed one that names no section still saves and
-          // simply never highlights. Reporting both as "will never highlight"
-          // would understate the first.
-          const malformed = id === '' || !/^[a-z-]+$/.test(id);
-          const unknown = !malformed && !SECTION_IDS.includes(id);
-          return (
-            <ItemCard
-              key={index}
-              index={index}
-              title={item.label || 'Nav item'}
-              onRemove={() => setNavigation(content.navigation.filter((_, i) => i !== index))}
-              onMoveUp={() => setNavigation(moveItem(content.navigation, index, -1))}
-              onMoveDown={() => setNavigation(moveItem(content.navigation, index, 1))}
-            >
-              <Field label="Menu text" hint="What appears in the menu at the top of the page.">
-                {(id) => (
-                  <TextInput
-                    id={id}
-                    value={item.label}
-                    onChange={(v) => updateNavItem(index, { label: v })}
-                    placeholder="Work"
-                  />
-                )}
-              </Field>
-
-              <Field
-                label="Points to"
-                hint="Must match a section on the page: work, experience, scope, expertise, about or contact. A menu item pointing somewhere else still appears, it just never highlights as you scroll."
-              >
-                {(id) => (
-                  <>
-                    <TextInput
-                      id={id}
-                      value={item.id}
-                      onChange={(v) => updateNavItem(index, { id: v })}
-                      placeholder="work"
-                      mono
-                    />
-                    {malformed && (
-                      <Note>
-                        Lowercase letters and hyphens only, and it cannot be empty.
-                        Saving will fail until this is fixed.
-                      </Note>
-                    )}
-                    {unknown && (
-                      <Note>
-                        No section on the page has this name, so this item will never highlight.
-                      </Note>
-                    )}
-                  </>
-                )}
-              </Field>
-            </ItemCard>
-          );
-        })}
-
-        <SecondaryButton onClick={() => setNavigation([...content.navigation, emptyNavItem()])}>
-          Add menu item
-        </SecondaryButton>
-      </Panel>
     </div>
   );
 }

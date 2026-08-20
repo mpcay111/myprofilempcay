@@ -350,13 +350,19 @@ function CompactEntry({ project, id }: { project: Project; id: string }) {
  */
 const GAP = 'pb-14 md:pb-16';
 
-export function Work({ content }: { content: SiteContent }) {
+export function Work({
+  content,
+  index,
+}: {
+  content: SiteContent;
+  index: string;
+}) {
   const projects = orderProjects(content.projects);
 
   return (
     <Section
       id="work"
-      index="01"
+      index={index}
       title="Selected Systems"
       standfirst={`${spellOut(projects.length)} operational systems, each designed and built to solve a problem inside a business I was running at the time.`}
     >

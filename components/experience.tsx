@@ -167,14 +167,20 @@ function Entry({ entry, current }: { entry: ExperienceEntry; current: boolean })
  * component, and every prop it receives is serialised into the page HTML where
  * anyone can read it. See the note in site-header.tsx.
  */
-export function Experience({ entries }: { entries: ExperienceEntry[] }) {
+export function Experience({
+  entries,
+  index,
+}: {
+  entries: ExperienceEntry[];
+  index: string;
+}) {
   /* The standfirst states no year count on purpose. The hero derives that
    * figure from the clock; a second, hardcoded copy here would drift out of
    * agreement with it. The dated timeline below carries the span instead. */
   return (
     <Section
       id="experience"
-      index="02"
+      index={index}
       title="Experience"
       standfirst="One arc through e-commerce operations — front-line agent in 2013, director of operations in 2025. Four employers, each a wider span of control than the last."
     >

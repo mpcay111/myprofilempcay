@@ -111,10 +111,74 @@ export const aboutSchema = z.object({
   portrait: imageRef,
 });
 
-export const navItemSchema = z.object({
-  id: text.regex(/^[a-z-]+$/, 'Anchor ids are lowercase and hyphenated'),
+/**
+ * The sections the page can render, in the order they appear.
+ *
+ * `id` is an enum, not free text, because each one maps to a specific React
+ * component — you cannot invent a section without writing code. That also
+ * removes a whole failure class the previous free-text navigation had: an id
+ * pointing at a section that does not exist.
+ *
+ * This list drives BOTH the page order and the header menu. They were two
+ * separate things and could disagree; a menu that lists sections in a
+ * different order from the page is just a bug waiting to be filed.
+ */
+export const SECTION_IDS = [
+  'work',
+  'experience',
+  'scope',
+  'expertise',
+  'about',
+  'contact',
+] as const;
+
+export type SectionId = (typeof SECTION_IDS)[number];
+
+export const sectionSchema = z.object({
+  id: z.enum(SECTION_IDS),
   label: text.min(1),
+  /** Hidden sections render nowhere and leave the menu — the content is kept. */
+  visible: z.boolean().default(true),
 });
+
+export type SectionConfig = z.infer<typeof sectionSchema>;
+
+/** Experience leads: the arc from front-line agent to director is the frame the
+ *  systems are then read through. */
+export const DEFAULT_SECTIONS: SectionConfig[] = [
+  { id: 'experience', label: 'Experience', visible: true },
+  { id: 'work', label: 'Work', visible: true },
+  { id: 'scope', label: 'Scope', visible: true },
+  { id: 'expertise', label: 'Expertise', visible: true },
+  { id: 'about', label: 'About', visible: true },
+  { id: 'contact', label: 'Contact', visible: true },
+];
+
+/**
+ * Every known section, exactly once, in the stored order.
+ *
+ * A stored document can be partial — written before a section existed, or
+ * hand-edited — and a section quietly vanishing from the page would be a
+ * miserable thing to debug. Unknown and duplicate ids are dropped, and anything
+ * missing is appended in its default position, so the page always renders the
+ * complete set.
+ */
+export function resolveSections(stored: SectionConfig[]): SectionConfig[] {
+  const seen = new Set<SectionId>();
+  const out: SectionConfig[] = [];
+
+  for (const section of stored) {
+    if (SECTION_IDS.includes(section.id) && !seen.has(section.id)) {
+      seen.add(section.id);
+      out.push(section);
+    }
+  }
+  for (const fallback of DEFAULT_SECTIONS) {
+    if (!seen.has(fallback.id)) out.push(fallback);
+  }
+
+  return out;
+}
 
 /**
  * The site's default appearance. 'system' follows the visitor's own device
@@ -139,7 +203,7 @@ export const siteContentSchema = z.object({
   certifications: z.array(text),
   languages: z.array(text),
   about: aboutSchema,
-  navigation: z.array(navItemSchema),
+  sections: z.array(sectionSchema).default(DEFAULT_SECTIONS),
   careerStartYear: z.number().int().min(1950).max(2100),
   careerStartMonth: z.number().int().min(1).max(12),
 });
@@ -153,7 +217,7 @@ export type ExpertiseGroup = z.infer<typeof expertiseGroupSchema>;
 export type EducationEntry = z.infer<typeof educationEntrySchema>;
 export type AboutContent = z.infer<typeof aboutSchema>;
 export type SocialLink = z.infer<typeof socialLinkSchema>;
-export type NavItem = z.infer<typeof navItemSchema>;
+
 
 /**
  * Featured projects first, original order preserved within each group.

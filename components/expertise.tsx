@@ -13,11 +13,17 @@ import type { SiteContent } from '@/lib/content/schema';
  * reads as a keyword dump; a column with generous leading reads as someone
  * stating what they do.
  */
-export function Expertise({ content }: { content: SiteContent }) {
+export function Expertise({
+  content,
+  index,
+}: {
+  content: SiteContent;
+  index: string;
+}) {
   return (
     <Section
       id="expertise"
-      index="04"
+      index={index}
       title="Expertise"
       standfirst="What I work in, what I build with, and the commercial ground underneath both."
     >

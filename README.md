@@ -204,6 +204,23 @@ stored is a salted scrypt hash, which cannot be reversed into the password.
 - **Uploads are checked by magic number**, not by the declared MIME type, which
   is attacker-controlled. Files are renamed to a UUID on the way in.
 
+### Section order
+
+Admin → **Sections**. One list drives the order of the page *and* the header
+menu, so the two can never disagree — they used to be separate fields that
+could. Each row can be reordered, renamed, or hidden.
+
+The numbering down the left margin (01, 02, …) is derived from position, so
+reordering renumbers the page automatically. Hiding a section keeps its content
+and does not consume a number: hide the third of six and the fourth becomes 03.
+
+Sections cannot be added or removed, because each id maps to a React component —
+`resolveSections()` guarantees every known section renders exactly once even if
+the stored document is partial or hand-edited, so a section can never silently
+vanish. The hero is always first and the footer always last; neither is
+orderable, because a hero that is not at the top and a footer that is not at the
+bottom are not those things.
+
 ### Theme
 
 Both palettes already existed in `globals.css`; what was added is the choosing.

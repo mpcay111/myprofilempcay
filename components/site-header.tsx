@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { NavItem, ThemeSetting } from '@/lib/content/schema';
+import type { SectionConfig, ThemeSetting } from '@/lib/content/schema';
 import { ThemeToggle } from '@/components/theme-toggle';
 
 /**
@@ -25,12 +25,13 @@ import { ThemeToggle } from '@/components/theme-toggle';
 export function SiteHeader({
   name,
   credentials,
-  navigation,
+  sections,
   themeDefault,
 }: {
   name: string;
   credentials: string | null;
-  navigation: NavItem[];
+  /** Already filtered to visible ones, in page order. */
+  sections: SectionConfig[];
   /** Only the default; the visitor's own choice overrides it client-side. */
   themeDefault: ThemeSetting;
 }) {
@@ -57,15 +58,15 @@ export function SiteHeader({
    * first one in document order wins — so the mark advances when the previous
    * section has genuinely left, not the moment the next one peeks in.
    *
-   * getElementById can miss: navigation is editable at runtime, so an id may
+   * getElementById can miss: the section list is editable at runtime, so an id may
    * name a section that is not on the page. Those entries are filtered out and
    * simply never activate. */
   useEffect(() => {
-    const sections = navigation
+    const observed = sections
       .map((item) => document.getElementById(item.id))
       .filter((el): el is HTMLElement => el !== null);
 
-    if (sections.length === 0) return;
+    if (observed.length === 0) return;
 
     const intersecting = new Set<string>();
 
@@ -76,15 +77,15 @@ export function SiteHeader({
           else intersecting.delete(entry.target.id);
         }
 
-        const current = navigation.find((item) => intersecting.has(item.id));
+        const current = sections.find((item) => intersecting.has(item.id));
         setActiveId(current ? current.id : null);
       },
       { rootMargin: '-56px 0px -60% 0px' },
     );
 
-    for (const section of sections) observer.observe(section);
+    for (const element of observed) observer.observe(element);
     return () => observer.disconnect();
-  }, [navigation]);
+  }, [sections]);
 
   /* Below md the nav is a one-line horizontal scroller, so the active
    * destination can sit off-screen. Scrolling the container directly (rather
@@ -142,7 +143,7 @@ export function SiteHeader({
           className="relative -my-1 min-w-0 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <ul role="list" className="flex items-center gap-5">
-            {navigation.map((item) => {
+            {sections.map((item) => {
               const isActive = item.id === activeId;
 
               return (

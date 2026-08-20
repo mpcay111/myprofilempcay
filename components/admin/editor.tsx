@@ -12,6 +12,7 @@ import { ScopeEditor } from '@/components/admin/sections/scope-editor';
 import { ExpertiseEditor } from '@/components/admin/sections/expertise-editor';
 import { AboutEditor } from '@/components/admin/sections/about-editor';
 import { ContactEditor } from '@/components/admin/sections/contact-editor';
+import { LayoutEditor } from '@/components/admin/sections/layout-editor';
 
 /**
  * The admin editor.
@@ -38,6 +39,7 @@ const TABS = [
   { id: 'expertise', label: 'Expertise', Component: ExpertiseEditor },
   { id: 'about', label: 'About', Component: AboutEditor },
   { id: 'contact', label: 'Contact', Component: ContactEditor },
+  { id: 'layout', label: 'Sections', Component: LayoutEditor },
 ] as const;
 
 const initialSaveState: SaveState = { ok: false, message: null };

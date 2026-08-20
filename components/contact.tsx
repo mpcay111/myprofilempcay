@@ -7,25 +7,24 @@ import { isPlaceholder } from '@/lib/placeholder';
 import type { SiteContent } from '@/lib/content/schema';
 
 /**
- * The closing section and the footer travel together: the footer only ever
- * appears under Contact, and page.tsx should not have to know that.
+ * The closing section.
+ *
+ * The footer used to live here, on the reasoning that it only ever appears
+ * under Contact. That stopped being true once section order became editable —
+ * Contact can now sit anywhere, and a footer in the middle of the page is not
+ * a footer. It is `SiteFooter` below, rendered by page.tsx after everything.
  *
  * There is deliberately no contact form. Nothing on this site has a backend,
  * and a form that silently drops a message is worse than no form at all.
  */
-export function Contact({ content }: { content: SiteContent }) {
+export function Contact({ content, index }: { content: SiteContent; index: string }) {
   const { email, identity, phone, showPhone, socials } = content;
-
-  /* Evaluated once at build. Safe here only because this is a server
-   * component — the same call in a client component would eventually
-   * disagree with the prerendered HTML and trip a hydration mismatch. */
-  const year = new Date().getFullYear();
 
   return (
     <>
       <Section
         id="contact"
-        index="06"
+        index={index}
         title="Contact"
         standfirst="No form to fill in and nothing between us — email reaches me directly."
       >
@@ -106,25 +105,39 @@ export function Contact({ content }: { content: SiteContent }) {
         </Reveal>
       </Section>
 
-      <footer>
-        <Rule />
-        <div className="container-grid flex flex-col gap-4 py-8 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
-          <p className="label text-muted">
-            © {year} {identity.name}
-          </p>
-          <p className="label sm:order-last">
-            Next.js · TypeScript · Tailwind · Framer Motion
-          </p>
-          {/* "#top" resolves to the top of the document even with no element of
-           * that id, so this holds whatever the hero is named. */}
-          <a
-            href="#top"
-            className="label transition-colors hover:text-foreground focus-visible:text-foreground"
-          >
-            Back to top <span aria-hidden="true">↑</span>
-          </a>
-        </div>
-      </footer>
     </>
+  );
+}
+
+/**
+ * Rendered by page.tsx after every section, so it stays at the bottom no
+ * matter how the sections are ordered.
+ */
+export function SiteFooter({ name }: { name: string }) {
+  /* Evaluated once at build. Safe only because this is a server component —
+   * the same call in a client component would eventually disagree with the
+   * prerendered HTML and trip a hydration mismatch. */
+  const year = new Date().getFullYear();
+
+  return (
+    <footer>
+      <Rule />
+      <div className="container-grid flex flex-col gap-4 py-8 sm:flex-row sm:items-baseline sm:justify-between sm:gap-8">
+        <p className="label text-muted">
+          © {year} {name}
+        </p>
+        <p className="label sm:order-last">
+          Next.js · TypeScript · Tailwind · Framer Motion
+        </p>
+        {/* "#top" resolves to the top of the document even with no element of
+         * that id, so this holds whatever the hero is named. */}
+        <a
+          href="#top"
+          className="label transition-colors hover:text-foreground focus-visible:text-foreground"
+        >
+          Back to top <span aria-hidden="true">↑</span>
+        </a>
+      </div>
+    </footer>
   );
 }

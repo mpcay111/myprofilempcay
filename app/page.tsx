@@ -1,4 +1,5 @@
 import { getContent } from '@/lib/content/source';
+import { resolveSections, type SectionId } from '@/lib/content/schema';
 import { SiteHeader } from '@/components/site-header';
 import { Hero } from '@/components/hero';
 import { Work } from '@/components/work';
@@ -6,25 +7,33 @@ import { Experience } from '@/components/experience';
 import { Scope } from '@/components/scope';
 import { Expertise } from '@/components/expertise';
 import { About } from '@/components/about';
-import { Contact } from '@/components/contact';
+import { Contact, SiteFooter } from '@/components/contact';
 import { StructuredData } from '@/components/structured-data';
 
 /**
- * The whole site is one page. Section order is deliberate: the systems he built
- * come before the roles he held, because the systems are the differentiator and
- * the roles are the corroboration.
+ * The whole site is one page, assembled in the order stored in the content
+ * document rather than hardcoded here — that order is editable in the admin.
  *
- * Content is read once here and passed down, rather than each section importing
- * it — that is what lets the admin change the page without a rebuild. The read
- * is cached and invalidated on save, so this is not a database round trip per
- * visitor.
+ * The spine index (01, 02, …) is derived from position, so reordering
+ * renumbers the page automatically. It used to be hardcoded inside each
+ * section, which was fine only while the order could not change.
  *
- * Each section owns its own spine index (00–06) internally, so reordering the
- * components below will not renumber them. If you move one, fix its `index`
- * prop in the component itself and the matching entry in `navigation`.
+ * Hero is always first and the footer always last; neither is orderable,
+ * because a hero that is not at the top and a footer that is not at the
+ * bottom are not those things.
  */
 export default async function Page() {
   const content = await getContent();
+  const sections = resolveSections(content.sections).filter((s) => s.visible);
+
+  const render: Record<SectionId, (index: string) => React.ReactNode> = {
+    work: (index) => <Work content={content} index={index} />,
+    experience: (index) => <Experience entries={content.experience} index={index} />,
+    scope: (index) => <Scope content={content} index={index} />,
+    expertise: (index) => <Expertise content={content} index={index} />,
+    about: (index) => <About content={content} index={index} />,
+    contact: (index) => <Contact content={content} index={index} />,
+  };
 
   return (
     <>
@@ -37,18 +46,18 @@ export default async function Page() {
       <SiteHeader
         name={content.identity.name}
         credentials={content.identity.credentials}
-        navigation={content.navigation}
+        sections={sections}
         themeDefault={content.theme}
       />
       <main id="main">
         <Hero content={content} />
-        <Work content={content} />
-        <Experience entries={content.experience} />
-        <Scope content={content} />
-        <Expertise content={content} />
-        <About content={content} />
-        <Contact content={content} />
+        {sections.map((section, i) => (
+          <div key={section.id}>
+            {render[section.id](String(i + 1).padStart(2, '0'))}
+          </div>
+        ))}
       </main>
+      <SiteFooter name={content.identity.name} />
       <StructuredData content={content} />
     </>
   );

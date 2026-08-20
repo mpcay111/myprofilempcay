@@ -14,12 +14,18 @@ import type { SiteContent } from '@/lib/content/schema';
  * reads as a mistake — so setting `about.portrait` (a /public path or a Storage
  * URL) is the only edit needed to bring it in.
  */
-export function About({ content }: { content: SiteContent }) {
+export function About({
+  content,
+  index,
+}: {
+  content: SiteContent;
+  index: string;
+}) {
   const { portrait, paragraphs } = content.about;
   const { identity } = content;
 
   return (
-    <Section id="about" index="05" title="About">
+    <Section id="about" index={index} title="About">
       <div className={portrait ? 'lg:grid lg:grid-cols-12 lg:gap-x-12' : undefined}>
         {portrait && (
           <Reveal className="lg:col-span-4">
