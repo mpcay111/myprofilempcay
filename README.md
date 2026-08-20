@@ -269,6 +269,40 @@ Two properties worth knowing:
   thumbnails, not three player SDKs — and the embed uses youtube-nocookie.com,
   which sets no tracking cookies until the visitor actually plays.
 
+### Logo bar
+
+Admin → **Logo bar**. A slow band of company logos directly under the menu.
+It is not a section — it does not appear in the running order or the menu —
+and it hides itself entirely while the list is empty.
+
+Upload **PNGs with a transparent background.** Logos are drawn as flat
+silhouettes so a single upload reads on both the light and the dark site; a
+logo sitting on a white rectangle becomes a solid black rectangle. Hovering a
+logo restores its real colours.
+
+Three things here are less obvious than they look, and all three were caught by
+measuring the running page rather than reading the markup:
+
+- **The silhouette is a CSS custom property, not a `dark:` variant.** The site
+  has *three* theme states, and the most common one — "follow my device" —
+  sets no class at all, so it is matched by a media query. A `dark:` variant
+  would have left the logos black on the dark ground for exactly the visitors
+  the treatment protects.
+- **That filter must never be transitioned.** CSS interpolates filter lists
+  function by function; with a transition on it, the toggle measurably stuck at
+  `invert(0)` — a no-op — leaving black logos on the dark ground. Both themes
+  now declare the same function list and the swap is instant.
+- **The pause button sets an inline style.** As a Tailwind class it silently did
+  nothing: `animate-marquee` sets the `animation` *shorthand*, which resets
+  `animation-play-state` to `running`, and it is emitted after the arbitrary
+  utility at equal specificity. The class was on the element and the animation
+  kept running.
+
+That button matters — WCAG 2.2.2 requires a way to stop anything that moves by
+itself for more than five seconds, and hover-pause does not count because
+keyboard and touch users have no hover. Anyone whose system asks for reduced
+motion gets a still bar and never has to press anything.
+
 ### Section order
 
 Admin → **Sections**. One list drives the order of the page *and* the header

@@ -34,12 +34,20 @@ const config: Config = {
         label: '0.14em',
       },
       keyframes: {
+        /* Translates exactly -50%: the track holds the logo set twice, so at
+           the halfway point the second copy sits precisely where the first
+           began and the loop is seamless. Any other distance would jump. */
+        marquee: {
+          from: { transform: 'translateX(0)' },
+          to: { transform: 'translateX(-50%)' },
+        },
         'draw-rule': {
           from: { transform: 'scaleX(0)' },
           to: { transform: 'scaleX(1)' },
         },
       },
       animation: {
+        marquee: 'marquee linear infinite',
         'draw-rule': 'draw-rule 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards',
       },
     },

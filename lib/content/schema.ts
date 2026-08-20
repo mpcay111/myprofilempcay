@@ -211,6 +211,16 @@ export type ThemeSetting = z.infer<typeof themeSchema>;
  * accent is contrast-checked against both grounds in lib/appearance.ts, and a
  * colour picker would quietly break that the first time it was used.
  */
+export const logoSchema = z.object({
+  /** The company or brand. Used as the image's alt text. */
+  name: text.min(1),
+  image: imageRef,
+  /** Optional link to the company. null renders the logo unlinked. */
+  url: nullableText,
+});
+
+export type LogoItem = z.infer<typeof logoSchema>;
+
 export const videoSchema = z.object({
   title: text.min(1),
   /** One line under the title. Optional. */
@@ -256,6 +266,7 @@ export const siteContentSchema = z.object({
   careerStartYear: z.number().int().min(1950).max(2100),
   careerStartMonth: z.number().int().min(1).max(12),
   videos: z.array(videoSchema).default([]),
+  logos: z.array(logoSchema).default([]),
 });
 
 export type SiteContent = z.infer<typeof siteContentSchema>;

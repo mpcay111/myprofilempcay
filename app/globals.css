@@ -25,6 +25,16 @@
      contrast. lib/appearance.ts overrides it to match the chosen accent. */
   --accent-bar: 176 78% 24%;
   --accent-foreground: 0 0% 100%; /*  6.18:1 on accent */
+  /* Flattens any logo to a solid silhouette so it reads on this ground. Set in
+     all three theme selectors below, exactly like the colour tokens — Tailwind's
+     `dark:` variant would miss the system-dark case, where no class is set.
+
+     The light value carries a redundant-looking `invert(0)` so both themes hold
+     the same filter-function list. Keep it that way, and do not put a
+     transition on this property: mismatched lists interpolate function by
+     function, and the toggle measurably stuck at `invert(0)` — a no-op that
+     leaves black logos on the dark ground. See components/logo-marquee.tsx. */
+  --logo-filter: brightness(0) invert(0);
 }
 
 /* Follows the OS when the visitor has expressed no explicit preference. */
@@ -39,6 +49,7 @@
     --border-strong: 206 12% 44%; /*  3.70:1 */
     --accent: 172 62% 58%; /* 10.33:1 */
     --accent-foreground: 206 24% 8%; /* 10.33:1 on accent */
+    --logo-filter: brightness(0) invert(1);
   }
 }
 
@@ -53,6 +64,7 @@
   --border-strong: 206 12% 44%;
   --accent: 172 62% 58%;
   --accent-foreground: 206 24% 8%;
+  --logo-filter: brightness(0) invert(1);
 }
 
 @layer base {

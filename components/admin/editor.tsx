@@ -14,6 +14,7 @@ import { AboutEditor } from '@/components/admin/sections/about-editor';
 import { ContactEditor } from '@/components/admin/sections/contact-editor';
 import { LayoutEditor } from '@/components/admin/sections/layout-editor';
 import { VideosEditor } from '@/components/admin/sections/videos-editor';
+import { LogosEditor } from '@/components/admin/sections/logos-editor';
 import { FormattingHelp } from '@/components/admin/formatting-help';
 
 /**
@@ -37,6 +38,7 @@ const TABS = [
   { id: 'identity', label: 'Identity', Component: IdentityEditor },
   { id: 'work', label: 'Work', Component: ProjectsEditor },
   { id: 'videos', label: 'Videos', Component: VideosEditor },
+  { id: 'logos', label: 'Logos', Component: LogosEditor },
   { id: 'experience', label: 'Experience', Component: ExperienceEditor },
   { id: 'scope', label: 'Scope', Component: ScopeEditor },
   { id: 'expertise', label: 'Expertise', Component: ExpertiseEditor },

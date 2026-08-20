@@ -4,6 +4,7 @@ import { SiteHeader } from '@/components/site-header';
 import { Hero } from '@/components/hero';
 import { Work } from '@/components/work';
 import { Video } from '@/components/video';
+import { LogoMarquee } from '@/components/logo-marquee';
 import { Experience } from '@/components/experience';
 import { Scope } from '@/components/scope';
 import { Expertise } from '@/components/expertise';
@@ -58,6 +59,11 @@ export default async function Page() {
         sections={sections}
         themeDefault={content.theme}
       />
+      {/* Directly under the header and in normal flow, so it scrolls away
+          rather than permanently occupying a second sticky strip. Renders
+          nothing when there are no logos. */}
+      <LogoMarquee logos={content.logos} />
+
       <main id="main">
         <Hero content={content} />
         {sections.map((section, i) => (

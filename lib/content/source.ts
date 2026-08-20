@@ -42,6 +42,7 @@ export function seedContent(): SiteContent {
     careerStartYear: seed.careerStartYear,
     careerStartMonth: seed.careerStartMonth,
     videos: seed.videos,
+    logos: seed.logos,
   });
 
   if (!parsed.success) {
