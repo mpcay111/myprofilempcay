@@ -25,6 +25,7 @@ export function seedContent(): SiteContent {
   const parsed = siteContentSchema.safeParse({
     identity: { ...seed.identity, photo: null, backgroundImage: null },
     theme: 'system' as const,
+    appearance: { accent: 'teal' as const, sans: 'inter' as const, mono: 'jetbrains' as const },
     email: seed.email,
     phone: seed.phone,
     showPhone: seed.showPhone,

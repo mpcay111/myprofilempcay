@@ -188,9 +188,29 @@ export function resolveSections(stored: SectionConfig[]): SectionConfig[] {
 export const themeSchema = z.enum(['system', 'light', 'dark']);
 export type ThemeSetting = z.infer<typeof themeSchema>;
 
+/**
+ * Global appearance. A fixed set of options rather than free pickers: every
+ * accent is contrast-checked against both grounds in lib/appearance.ts, and a
+ * colour picker would quietly break that the first time it was used.
+ */
+export const appearanceSchema = z.object({
+  accent: z
+    .enum(['teal', 'indigo', 'violet', 'amber', 'rose', 'green', 'blue', 'slate'])
+    .default('teal'),
+  sans: z.enum(['inter', 'source', 'plex']).default('inter'),
+  mono: z.enum(['jetbrains', 'plex']).default('jetbrains'),
+});
+
+export type Appearance = z.infer<typeof appearanceSchema>;
+
 export const siteContentSchema = z.object({
   identity: identitySchema,
   theme: themeSchema.default('system'),
+  appearance: appearanceSchema.default({
+    accent: 'teal',
+    sans: 'inter',
+    mono: 'jetbrains',
+  }),
   email: z.string().trim().email('Must be a valid email address'),
   phone: text,
   showPhone: z.boolean(),

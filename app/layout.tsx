@@ -1,7 +1,14 @@
 import type { Metadata, Viewport } from 'next';
-import { Inter, JetBrains_Mono } from 'next/font/google';
+import {
+  Inter,
+  JetBrains_Mono,
+  Source_Sans_3,
+  IBM_Plex_Sans,
+  IBM_Plex_Mono,
+} from 'next/font/google';
 import { getContent } from '@/lib/content/source';
 import { themeBootScript } from '@/lib/theme';
+import { appearanceStyles } from '@/lib/appearance';
 import { orFallback } from '@/lib/placeholder';
 import './globals.css';
 
@@ -13,15 +20,63 @@ import './globals.css';
 const inter = Inter({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-sans',
+  variable: '--font-inter',
+});
+
+/**
+ * The alternates carry `preload: false` deliberately. Declaring a family emits
+ * its @font-face rules, but a preload link would make the browser fetch every
+ * option on every page load when only one is ever used. Without preloading,
+ * the unused families cost nothing but a few lines of CSS.
+ */
+const sourceSans = Source_Sans_3({
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-source',
+  preload: false,
+});
+
+const plexSans = IBM_Plex_Sans({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  display: 'swap',
+  variable: '--font-plex-sans',
+  preload: false,
+});
+
+const plexMono = IBM_Plex_Mono({
+  subsets: ['latin'],
+  weight: ['400', '500'],
+  display: 'swap',
+  variable: '--font-plex-mono',
+  preload: false,
 });
 
 /** The register: section marks, spec-rail labels, figures, tags. */
 const jetbrainsMono = JetBrains_Mono({
   subsets: ['latin'],
   display: 'swap',
-  variable: '--font-mono',
+  variable: '--font-jetbrains',
 });
+
+const SANS_VARIABLES = {
+  inter: '--font-inter',
+  source: '--font-source',
+  plex: '--font-plex-sans',
+} as const;
+
+const MONO_VARIABLES = {
+  jetbrains: '--font-jetbrains',
+  plex: '--font-plex-mono',
+} as const;
+
+const FONT_CLASSES = [
+  inter.variable,
+  sourceSans.variable,
+  plexSans.variable,
+  jetbrainsMono.variable,
+  plexMono.variable,
+].join(' ');
 
 /**
  * Metadata is generated rather than static because the name, role and statement
@@ -90,7 +145,14 @@ export const viewport: Viewport = {
 export default async function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
-  const { theme } = await getContent();
+  const { theme, appearance } = await getContent();
+
+  /* globals.css reads --font-sans and --font-mono; these point them at whichever
+   * family was chosen. Emitted after the stylesheet so it wins on cascade order. */
+  const styles =
+    appearanceStyles(appearance.accent) +
+    `:root{--font-sans:var(${SANS_VARIABLES[appearance.sans]});` +
+    `--font-mono:var(${MONO_VARIABLES[appearance.mono]});}`;
 
   return (
     // suppressHydrationWarning because the boot script below mutates this
@@ -98,7 +160,7 @@ export default async function RootLayout({
     // the script, not a bug, and it is confined to this one attribute.
     <html
       lang="en"
-      className={`${inter.variable} ${jetbrainsMono.variable}`}
+      className={FONT_CLASSES}
       suppressHydrationWarning
     >
       <head>
@@ -106,6 +168,7 @@ export default async function RootLayout({
             paint the wrong palette first, so a visitor who chose dark gets a
             white flash on every navigation. */}
         <script dangerouslySetInnerHTML={{ __html: themeBootScript(theme) }} />
+        <style dangerouslySetInnerHTML={{ __html: styles }} />
       </head>
       <body>
         <a

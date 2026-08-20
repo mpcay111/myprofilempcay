@@ -13,6 +13,7 @@ import { ExpertiseEditor } from '@/components/admin/sections/expertise-editor';
 import { AboutEditor } from '@/components/admin/sections/about-editor';
 import { ContactEditor } from '@/components/admin/sections/contact-editor';
 import { LayoutEditor } from '@/components/admin/sections/layout-editor';
+import { FormattingHelp } from '@/components/admin/formatting-help';
 
 /**
  * The admin editor.
@@ -118,6 +119,10 @@ export function Editor({
 
       <div className="mt-10">
         <ActiveEditor content={content} onChange={setContent} />
+      </div>
+
+      <div className="mt-12">
+        <FormattingHelp />
       </div>
 
       {/* Save bar. Fixed, because the section editors are long and a save

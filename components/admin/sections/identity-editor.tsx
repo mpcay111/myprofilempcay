@@ -1,7 +1,8 @@
 'use client';
 
 import type { SectionEditorProps } from '@/components/admin/editor';
-import type { Identity, SiteContent } from '@/lib/content/schema';
+import type { Appearance, Identity, SiteContent } from '@/lib/content/schema';
+import { ACCENTS, MONO_LABELS, SANS_LABELS } from '@/lib/appearance';
 import { Field, Panel, StringList, TextArea, TextInput, Toggle } from '@/components/admin/ui';
 import { ImageField } from '@/components/admin/image-field';
 
@@ -40,6 +41,10 @@ export function IdentityEditor({ content, onChange }: SectionEditorProps) {
 
   const setIdentity = <K extends keyof Identity>(key: K, value: Identity[K]) => {
     onChange({ ...content, identity: { ...identity, [key]: value } });
+  };
+
+  const setAppearance = <K extends keyof Appearance>(key: K, value: Appearance[K]) => {
+    onChange({ ...content, appearance: { ...content.appearance, [key]: value } });
   };
 
   return (
@@ -173,6 +178,68 @@ export function IdentityEditor({ content, onChange }: SectionEditorProps) {
       </Panel>
 
       <Panel title="Appearance">
+        <Field
+          label="Accent colour"
+          hint="Used sparingly — section numbers, the current role, links on hover. Every option here was checked for readability against both the light and dark backgrounds, which is why it is a list rather than a colour picker."
+        >
+          {(id) => (
+            <select
+              id={id}
+              value={content.appearance.accent}
+              onChange={(e) =>
+                setAppearance('accent', e.target.value as Appearance['accent'])
+              }
+              className={inputBase}
+            >
+              {Object.entries(ACCENTS).map(([value, def]) => (
+                <option key={value} value={value}>
+                  {def.label}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+
+        <Field
+          label="Body typeface"
+          hint="Carries everything except the small monospace labels."
+        >
+          {(id) => (
+            <select
+              id={id}
+              value={content.appearance.sans}
+              onChange={(e) => setAppearance('sans', e.target.value as Appearance['sans'])}
+              className={inputBase}
+            >
+              {Object.entries(SANS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+
+        <Field
+          label="Label typeface"
+          hint="The small uppercase labels, dates, figures and tags."
+        >
+          {(id) => (
+            <select
+              id={id}
+              value={content.appearance.mono}
+              onChange={(e) => setAppearance('mono', e.target.value as Appearance['mono'])}
+              className={inputBase}
+            >
+              {Object.entries(MONO_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          )}
+        </Field>
+
         <Field
           label="Site theme"
           hint="The default a visitor sees on their first visit. 'Match device' follows their own light/dark setting, which is usually the kindest choice. Either way there is a toggle in the site header, and a visitor's own choice is remembered on their device and overrides this."

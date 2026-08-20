@@ -1,4 +1,5 @@
 import { isPlaceholder } from '@/lib/placeholder';
+import { renderInline } from '@/lib/inline';
 
 /**
  * Renders a content string, marking it if it is still an unfilled placeholder.
@@ -7,7 +8,9 @@ import { isPlaceholder } from '@/lib/placeholder';
  * as an absence than as a sentence — use `SpecValue` instead.
  */
 export function Copy({ children }: { children: string }) {
-  if (!isPlaceholder(children)) return <>{children}</>;
+  // Emphasis markup is parsed here rather than at each call site, so every
+  // place that already renders prose through <Copy> gets it at once.
+  if (!isPlaceholder(children)) return <>{renderInline(children)}</>;
   return (
     <span className="ph" title="Placeholder — fill this in at content/profile.ts">
       {children}

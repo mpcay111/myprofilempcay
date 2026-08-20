@@ -204,6 +204,44 @@ stored is a salted scrypt hash, which cannot be reversed into the password.
 - **Uploads are checked by magic number**, not by the declared MIME type, which
   is attacker-controlled. Files are renamed to a UUID on the way in.
 
+### Text formatting
+
+A very small inline markup works in any paragraph, description or bullet:
+
+| Syntax | Result |
+| --- | --- |
+| `**bold**` | strong emphasis |
+| `*italic*` | light emphasis |
+| `==highlight==` | the accent colour |
+| `[label](https://…)` | a link, opening in a new tab |
+
+Anything else stays literal. The admin has a collapsed reference under the
+editor that renders each example through the real parser, so the help cannot
+drift from the behaviour.
+
+It deliberately is **not** rich text. Storing HTML and rendering it with
+`dangerouslySetInnerHTML` would make every content field a script-injection
+point on a public page. This parser emits React elements instead, so there is
+nothing to sanitise: raw HTML stays literal text, and a `javascript:` or
+`data:` href never becomes a link. Link URLs must be written with an explicit
+`http://` or `https://` scheme, so what is typed is what is linked.
+
+### Appearance
+
+Admin → Identity → **Appearance**: accent colour, body typeface, label typeface.
+
+Eight accents, and the list is fixed rather than a colour picker for a reason.
+The accent is used on 11px labels, and the site has two grounds — warm paper and
+dark ink — so a colour readable on one can fail on the other. Each option's
+lightness was searched per hue for a comfortable margin against both, and the
+measured ratios are recorded next to each entry in
+[`lib/appearance.ts`](lib/appearance.ts): every one clears ≥6:1 on light, ≥8:1
+on dark, and ≥6.4:1 for white text sitting on the accent. If you add one, run
+the numbers rather than eyeballing it.
+
+The alternate typefaces are declared with `preload: false`, so choosing one
+costs a font fetch and the unused families cost nothing but a few lines of CSS.
+
 ### Section order
 
 Admin → **Sections**. One list drives the order of the page *and* the header

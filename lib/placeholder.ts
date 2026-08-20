@@ -6,10 +6,18 @@
  * tags) so a half-finished site never publishes "[Your Name]" to Google.
  */
 
-/** True when a value is an unfilled placeholder like "[Your Name]". */
+/**
+ * True when a value is an unfilled placeholder like "[Your Name]".
+ *
+ * The negative lookahead matters: inline markup writes links as
+ * `[label](https://…)`, which is also bracketed. Without it, any paragraph
+ * containing a link was flagged as unfilled — rendered with the dotted
+ * placeholder underline and skipped by the markup parser, so the link never
+ * became a link. A placeholder is a bracket NOT followed by a parenthesis.
+ */
 export function isPlaceholder(value: string | null | undefined): boolean {
   if (!value) return true;
-  return /\[.+\]/.test(value);
+  return /\[[^\]]+\](?!\()/.test(value);
 }
 
 /** Returns the value, or `fallback` when it is still a placeholder. */
