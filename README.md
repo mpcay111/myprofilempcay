@@ -242,6 +242,33 @@ the numbers rather than eyeballing it.
 The alternate typefaces are declared with `preload: false`, so choosing one
 costs a font fetch and the unused families cost nothing but a few lines of CSS.
 
+### Videos
+
+Admin → **Videos**. Upload the video to YouTube or Vimeo first — an unlisted
+YouTube video is not searchable and is only reachable through this site — then
+paste its link. The section hides itself from the page *and* the menu while the
+list is empty.
+
+Links rather than uploads, deliberately: the Supabase free tier allows 5 GB of
+downloads a month and every play of an uploaded file re-downloads it, so one
+80 MB video watched ~60 times exhausts the tier. Embeds stream from the video
+host's CDN at whatever quality the connection carries and cost this site
+nothing.
+
+Two properties worth knowing:
+
+- **The pasted URL is never rendered.** [`lib/video.ts`](lib/video.ts) extracts
+  the video id, validates it against a strict pattern, and rebuilds the embed
+  URL from a fixed template for a known host. Lookalike domains
+  (`youtube.com.evil.com`), `javascript:` URLs, and arbitrary iframes are all
+  structurally impossible, and the admin validates with the same parser the
+  page uses.
+- **Players load on click, not on page load.** Each video renders as a
+  thumbnail facade (YouTube) or a play card (Vimeo); the click that swaps in
+  the real player is the click that starts playback. Three videos cost three
+  thumbnails, not three player SDKs — and the embed uses youtube-nocookie.com,
+  which sets no tracking cookies until the visitor actually plays.
+
 ### Section order
 
 Admin → **Sections**. One list drives the order of the page *and* the header

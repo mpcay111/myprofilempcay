@@ -142,6 +142,7 @@ export const aboutSchema = z.object({
 export const SECTION_IDS = [
   'work',
   'experience',
+  'video',
   'scope',
   'expertise',
   'about',
@@ -164,6 +165,7 @@ export type SectionConfig = z.infer<typeof sectionSchema>;
 export const DEFAULT_SECTIONS: SectionConfig[] = [
   { id: 'experience', label: 'Experience', visible: true },
   { id: 'work', label: 'Work', visible: true },
+  { id: 'video', label: 'Video', visible: true },
   { id: 'scope', label: 'Scope', visible: true },
   { id: 'expertise', label: 'Expertise', visible: true },
   { id: 'about', label: 'About', visible: true },
@@ -209,6 +211,17 @@ export type ThemeSetting = z.infer<typeof themeSchema>;
  * accent is contrast-checked against both grounds in lib/appearance.ts, and a
  * colour picker would quietly break that the first time it was used.
  */
+export const videoSchema = z.object({
+  title: text.min(1),
+  /** One line under the title. Optional. */
+  caption: nullableText,
+  /** A YouTube or Vimeo URL. Validated and turned into a safe embed by
+   *  lib/video.ts — never rendered as an iframe src directly. */
+  url: text.min(1),
+});
+
+export type VideoItem = z.infer<typeof videoSchema>;
+
 export const appearanceSchema = z.object({
   accent: z
     .enum(['teal', 'indigo', 'violet', 'amber', 'rose', 'green', 'blue', 'slate'])
@@ -242,6 +255,7 @@ export const siteContentSchema = z.object({
   sections: z.array(sectionSchema).default(DEFAULT_SECTIONS),
   careerStartYear: z.number().int().min(1950).max(2100),
   careerStartMonth: z.number().int().min(1).max(12),
+  videos: z.array(videoSchema).default([]),
 });
 
 export type SiteContent = z.infer<typeof siteContentSchema>;

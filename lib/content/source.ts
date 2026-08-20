@@ -41,6 +41,7 @@ export function seedContent(): SiteContent {
     navigation: seed.navigation.map((n) => ({ id: n.id, label: n.label })),
     careerStartYear: seed.careerStartYear,
     careerStartMonth: seed.careerStartMonth,
+    videos: seed.videos,
   });
 
   if (!parsed.success) {

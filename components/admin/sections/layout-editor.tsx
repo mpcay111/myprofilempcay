@@ -19,6 +19,7 @@ import { Field, IconButton, Panel, TextInput, Toggle, moveItem } from '@/compone
 const DESCRIPTIONS: Record<string, string> = {
   work: 'The systems you designed and built.',
   experience: 'Your roles, most recent first.',
+  video: 'Walkthroughs and demos, embedded from YouTube or Vimeo. Hidden automatically while it has no videos.',
   scope: 'The functional areas you own.',
   expertise: 'Skills, tools, education and credentials.',
   about: 'The long-form prose about you.',

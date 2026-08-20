@@ -556,6 +556,12 @@ export const orderedProjects: Project[] = [
  * lib/career.ts does the month-aware arithmetic — use it rather than
  * recomputing from the year.
  */
+export type VideoItem = { title: string; caption: string | null; url: string };
+
+/** YouTube or Vimeo links, shown in the Video section. Empty by default — the
+ *  section hides itself until you add one. Edit these in the admin. */
+export const videos: VideoItem[] = [];
+
 export const careerStartYear = 2013;
 export const careerStartMonth = 12;
 

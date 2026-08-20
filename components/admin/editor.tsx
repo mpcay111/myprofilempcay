@@ -13,6 +13,7 @@ import { ExpertiseEditor } from '@/components/admin/sections/expertise-editor';
 import { AboutEditor } from '@/components/admin/sections/about-editor';
 import { ContactEditor } from '@/components/admin/sections/contact-editor';
 import { LayoutEditor } from '@/components/admin/sections/layout-editor';
+import { VideosEditor } from '@/components/admin/sections/videos-editor';
 import { FormattingHelp } from '@/components/admin/formatting-help';
 
 /**
@@ -35,6 +36,7 @@ export type SectionEditorProps = {
 const TABS = [
   { id: 'identity', label: 'Identity', Component: IdentityEditor },
   { id: 'work', label: 'Work', Component: ProjectsEditor },
+  { id: 'videos', label: 'Videos', Component: VideosEditor },
   { id: 'experience', label: 'Experience', Component: ExperienceEditor },
   { id: 'scope', label: 'Scope', Component: ScopeEditor },
   { id: 'expertise', label: 'Expertise', Component: ExpertiseEditor },

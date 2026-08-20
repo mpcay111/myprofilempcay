@@ -3,6 +3,7 @@ import { resolveSections, type SectionId } from '@/lib/content/schema';
 import { SiteHeader } from '@/components/site-header';
 import { Hero } from '@/components/hero';
 import { Work } from '@/components/work';
+import { Video } from '@/components/video';
 import { Experience } from '@/components/experience';
 import { Scope } from '@/components/scope';
 import { Expertise } from '@/components/expertise';
@@ -24,10 +25,18 @@ import { StructuredData } from '@/components/structured-data';
  */
 export default async function Page() {
   const content = await getContent();
-  const sections = resolveSections(content.sections).filter((s) => s.visible);
+
+  /* A visible-but-empty video section would render a heading over nothing, and
+   * its menu item would scroll to nothing. Dropping it HERE — before the list
+   * splits into header and page — keeps the menu and the page in agreement,
+   * which is the invariant the unified section list exists to protect. */
+  const sections = resolveSections(content.sections)
+    .filter((s) => s.visible)
+    .filter((s) => s.id !== 'video' || content.videos.length > 0);
 
   const render: Record<SectionId, (index: string) => React.ReactNode> = {
     work: (index) => <Work content={content} index={index} />,
+    video: (index) => <Video videos={content.videos} index={index} />,
     experience: (index) => <Experience entries={content.experience} index={index} />,
     scope: (index) => <Scope content={content} index={index} />,
     expertise: (index) => <Expertise content={content} index={index} />,
