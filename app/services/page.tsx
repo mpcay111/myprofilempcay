@@ -5,7 +5,8 @@ import { visibleSections } from '@/lib/content/schema';
 import { orFallback } from '@/lib/placeholder';
 import { SiteHeader } from '@/components/site-header';
 import { LogoMarquee } from '@/components/logo-marquee';
-import { Services } from '@/components/services';
+import { Services, serviceElementId } from '@/components/services';
+import { ActiveSectionProvider } from '@/components/active-section';
 import { SiteFooter } from '@/components/contact';
 import { ServicesStructuredData } from '@/components/structured-data';
 
@@ -54,8 +55,12 @@ export default async function ServicesPage() {
 
   const sections = visibleSections(content);
 
+  /* The spine's gauge and current-service mark read this, the same way the home
+     page's sections do. */
+  const serviceIds = content.services.items.map((_, i) => serviceElementId(i));
+
   return (
-    <>
+    <ActiveSectionProvider ids={serviceIds}>
       {/* Narrow props for the same reason as the home page: this is a client
           component, so anything handed to it is serialised into the RSC
           payload embedded in the HTML and is readable by view-source. */}
@@ -73,6 +78,6 @@ export default async function ServicesPage() {
       </main>
       <SiteFooter name={content.identity.name} />
       <ServicesStructuredData content={content} />
-    </>
+    </ActiveSectionProvider>
   );
 }

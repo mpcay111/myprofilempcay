@@ -75,8 +75,12 @@ function Entry({ entry, current }: { entry: ExperienceEntry; current: boolean })
 
   const tags = realOnly(entry.tags);
 
+  /* md:items-baseline on the article ties the 11px date rail to the 28px
+     company name beside it. Without it the two columns had no baseline
+     relationship at all — each simply started at the top of its own cell,
+     which is what makes two registers look pasted together rather than set. */
   return (
-    <article className="grid gap-y-6 pb-14 pt-8 md:grid-cols-12 md:gap-x-8 md:pb-20 md:pt-10">
+    <article className="grid gap-y-6 pb-14 pt-8 md:grid-cols-12 md:items-baseline md:gap-x-8 md:pb-20 md:pt-10">
       {/* Spec rail — the mono register, aligned down the whole section. */}
       <div className="md:col-span-3">
         <p className="label flex flex-wrap items-baseline gap-x-2 gap-y-1">
@@ -143,15 +147,42 @@ function Entry({ entry, current }: { entry: ExperienceEntry; current: boolean })
              same subdued tone the dash had. */
           className="mt-7 max-w-prose list-disc space-y-3 pl-5 marker:text-border-strong"
         >
-          {entry.highlights.map((highlight, i) => (
-            <li
-              key={highlight}
-              hidden={!expanded && !opensVisible(highlight, i)}
-              className="pl-1.5 text-[0.9375rem] leading-[1.55] text-muted"
-            >
-              <Copy>{highlight}</Copy>
-            </li>
-          ))}
+          {entry.highlights.map((highlight, i) => {
+            const overflow = !opensVisible(highlight, i);
+
+            /* Position among the concealed items only, so the stagger starts at
+               zero on the first newly-revealed bullet rather than inheriting
+               the offset of the ones that were already on screen. */
+            const step = overflow
+              ? entry.highlights.filter((h, j) => j < i && !opensVisible(h, j)).length
+              : 0;
+
+            return (
+              <li
+                key={highlight}
+                /* `hidden` is still the right state for collapsed content: it
+                   takes the bullet out of the accessibility tree and out of
+                   find-in-page, which is what "collapsed" should mean. What it
+                   could not do is come back gracefully — display:none to
+                   display:list-item is a snap by definition, so the whole
+                   remainder of the list used to appear in one frame. */
+                hidden={!expanded && overflow}
+                /* Capped so a role with a long list does not make the last
+                   bullet wait; 8 × 45ms is the whole stagger, however many
+                   there are. */
+                style={
+                  expanded && overflow
+                    ? { animationDelay: `${Math.min(step, 8) * 45}ms` }
+                    : undefined
+                }
+                className={`pl-1.5 text-[0.9375rem] leading-[1.55] text-muted ${
+                  expanded && overflow ? 'motion-safe:animate-reveal-item' : ''
+                }`}
+              >
+                <Copy>{highlight}</Copy>
+              </li>
+            );
+          })}
         </ul>
 
         {concealed > 0 && (

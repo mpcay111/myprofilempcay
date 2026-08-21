@@ -2,6 +2,7 @@ import { Rule } from '@/components/rule';
 import { Reveal } from '@/components/reveal';
 import { SpecList, SpecRow } from '@/components/spec';
 import { Copy } from '@/components/placeholder-text';
+import { SectionSpine } from '@/components/section-spine';
 import type { ServicesContent, ServiceItem } from '@/lib/content/schema';
 
 /**
@@ -18,32 +19,39 @@ import type { ServicesContent, ServiceItem } from '@/lib/content/schema';
  * quickest way to break that is to invent a second layout system for one page.
  */
 
-function Service({ service, index }: { service: ServiceItem; index: string }) {
+/**
+ * Element id for the nth service.
+ *
+ * Index-based rather than slugified from the title: titles are editable in the
+ * admin, so a slug would silently change the id — and therefore break the
+ * observer wiring and any link anyone had saved — the first time a word was
+ * corrected. Exported so the page can hand the same list to the provider.
+ */
+export const serviceElementId = (i: number) => `service-${i + 1}`;
+
+function Service({
+  service,
+  index,
+  elementId,
+}: {
+  service: ServiceItem;
+  index: string;
+  elementId: string;
+}) {
   /* Both rail values are optional and the rail should not render as an empty
      framed box when neither is set. */
   const hasRail = Boolean(service.audience || service.format);
 
   return (
-    <article>
+    <article id={elementId} className="scroll-mt-20">
       <Rule />
 
       <div className="container-grid py-16 md:py-20 lg:py-24">
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-          {/* Index gutter — the spine, same device as every section on the
-              home page. Decorative: the <h2> below is the real heading, so
-              announcing "01, section Fractional COO" first just doubles it. */}
-          <div className="lg:col-span-2">
-            <div
-              aria-hidden="true"
-              className="flex items-baseline gap-3 lg:sticky lg:top-24 lg:block lg:border-l lg:border-border lg:pl-4"
-            >
-              <span className="label text-accent">{index}</span>
-              <span className="label lg:mt-3 lg:block">§ {service.title}</span>
-            </div>
-            <div className="mt-4 lg:hidden">
-              <Rule />
-            </div>
-          </div>
+          {/* The same spine component the home page's sections use, rather than
+              a second copy of its markup — this file used to carry its own,
+              which is how the two would have drifted apart. */}
+          <SectionSpine id={elementId} index={index} title={service.title} />
 
           <div className="mt-8 lg:col-span-10 lg:mt-0">
             <Reveal>
@@ -136,6 +144,7 @@ export function Services({
           key={`${service.title}-${i}`}
           service={service}
           index={String(i + 1).padStart(2, '0')}
+          elementId={serviceElementId(i)}
         />
       ))}
 

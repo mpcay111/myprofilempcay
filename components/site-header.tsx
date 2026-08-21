@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import type { SectionConfig, ThemeSetting } from '@/lib/content/schema';
 import { ThemeToggle } from '@/components/theme-toggle';
+import { useActiveSection } from '@/components/active-section';
 
 /**
  * The sticky bar. 56px, fixed forever — `section[id] { scroll-margin-top: 5rem }`
@@ -42,7 +43,10 @@ export function SiteHeader({
    */
   servicesLabel?: string | null;
 }) {
-  const [activeId, setActiveId] = useState<string | null>(null);
+  /* Shared with the section spine rather than observed again here. See the note
+     in active-section.tsx: two observers computing "current" independently is a
+     promise that the menu and the spine will eventually disagree on screen. */
+  const activeId = useActiveSection()?.activeId ?? null;
 
   /**
    * The section links are in-page anchors, which stop working the moment this
@@ -58,63 +62,98 @@ export function SiteHeader({
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const servicesRef = useRef<HTMLAnchorElement | null>(null);
 
-  /* The observation band is the top ~40% of the viewport, below the bar. A
-   * section counts as "current" while it still occupies that band, and the
-   * first one in document order wins — so the mark advances when the previous
-   * section has genuinely left, not the moment the next one peeks in.
+  /* The observer that used to live here now lives in
+     ActiveSectionProvider, which feeds both this bar and the section spine. */
+
+  /**
+   * The current destination, whichever kind it is.
    *
-   * getElementById can miss: the section list is editable at runtime, so an id may
-   * name a section that is not on the page. Those entries are filtered out and
-   * simply never activate. */
+   * On the home page that is whichever section the observer has marked; on
+   * /services it is the Services link, where activeId is null by design. Both
+   * the travelling register mark and the mobile centring below read this, so
+   * they can never disagree about what "current" means.
+   */
+  const currentItem = () =>
+    onHome ? (activeId ? itemRefs.current[activeId] : null) : servicesRef.current;
+
+  /**
+   * Identity of the current destination — not the active section id.
+   *
+   * Off the home page the destination is always the Services link, however far
+   * down the page the reader has scrolled. Keying the effects below on
+   * `activeId` instead meant they re-fired at every service boundary, because
+   * /services now feeds the provider its own article ids. The visible symptom
+   * was the worst kind: the nav is a horizontal scroller at 375px, so each
+   * re-fire smooth-scrolled it back to centre the Services link and threw away
+   * whatever the reader had swiped it to — once per service, seven times on
+   * the current content, with the destination never actually changing.
+   */
+  const currentKey = onHome ? activeId : 'services';
+
+  /**
+   * The register mark — a rule under the current destination that travels
+   * between them.
+   *
+   * Colour alone was carrying this state: white/80 to white, a 4.85:1 to 6.58:1
+   * shift on the same glyphs, which is close to invisible as a signal and
+   * unavailable to anyone who cannot separate those two whites.
+   *
+   * It hangs off <nav>, never off the <ul>. <nav> is the scroll container, so
+   * an absolutely positioned child scrolls WITH the items at 375px instead of
+   * floating over them — and <ul> is deliberately left unpositioned so it never
+   * becomes the offsetParent that offsetLeft is measured against.
+   */
+  const [mark, setMark] = useState<{ left: number; width: number } | null>(null);
+  const [placed, setPlaced] = useState(false);
+
   useEffect(() => {
-    /* Nothing to observe off the home page — those sections live on another
-       document, and leaving the observer running would mark a nav item
-       "current" on a page that does not contain it. */
-    if (!onHome) {
-      setActiveId(null);
+    const nav = navRef.current;
+    const item = currentItem();
+
+    // Render nothing rather than parking a zero-width bar at the left edge.
+    if (!nav || !item) {
+      setMark(null);
+      setPlaced(false);
       return;
     }
 
-    const observed = sections
-      .map((item) => document.getElementById(item.id))
-      .filter((el): el is HTMLElement => el !== null);
+    // offsetLeft, not getBoundingClientRect().left — the rect is viewport-based
+    // and would drift by the scroll offset the moment the nav is scrolled.
+    const measure = () => setMark({ left: item.offsetLeft, width: item.offsetWidth });
+    measure();
 
-    if (observed.length === 0) return;
-
-    const intersecting = new Set<string>();
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) {
-          if (entry.isIntersecting) intersecting.add(entry.target.id);
-          else intersecting.delete(entry.target.id);
-        }
-
-        const current = sections.find((item) => intersecting.has(item.id));
-        setActiveId(current ? current.id : null);
-      },
-      { rootMargin: '-56px 0px -60% 0px' },
-    );
-
-    for (const element of observed) observer.observe(element);
+    /* Labels are editable in the admin and the webfont swaps in after first
+       paint, so a measurement taken once is a measurement that goes stale. */
+    const observer = new ResizeObserver(measure);
+    observer.observe(nav);
+    observer.observe(item);
     return () => observer.disconnect();
-  }, [sections, onHome]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentKey, onHome, pathname, sections, servicesLabel]);
+
+  /**
+   * The flag gates the TRANSITION, not the visibility.
+   *
+   * The mark is painted as soon as it has a position; what waits for a frame is
+   * permission to animate. Without that wait the very first mark would slide in
+   * from x:0 w:0, which reads as a glitch rather than an entrance — but gating
+   * opacity on the frame instead meant the mark was invisible until
+   * requestAnimationFrame ran, and rAF does not run in a background tab. A page
+   * restored from one would have shown no mark at all. Now the worst case is a
+   * mark that appears without animating.
+   */
+  useEffect(() => {
+    if (!mark || placed) return;
+    const frame = requestAnimationFrame(() => setPlaced(true));
+    return () => cancelAnimationFrame(frame);
+  }, [mark, placed]);
 
   /* Below md the nav is a one-line horizontal scroller, so the active
    * destination can sit off-screen. Scrolling the container directly (rather
    * than scrollIntoView) keeps the page itself out of it. */
   useEffect(() => {
     const nav = navRef.current;
-
-    /* On /services the current destination is the Services link, not a
-       section — activeId is null there. Without this the link for the page you
-       are actually on sits off the right-hand edge of the scroller on a phone,
-       which is the one item that should never be the hidden one. */
-    const item = onHome
-      ? activeId
-        ? itemRefs.current[activeId]
-        : null
-      : servicesRef.current;
+    const item = currentItem();
 
     if (!nav || !item) return;
     if (nav.scrollWidth <= nav.clientWidth) return;
@@ -127,7 +166,7 @@ export function SiteHeader({
         ? 'auto'
         : 'smooth',
     });
-  }, [activeId, onHome, pathname]);
+  }, [currentKey, onHome, pathname]);
 
   return (
     /* A solid accent bar in both themes. It used to be transparent over the
@@ -143,9 +182,20 @@ export function SiteHeader({
        this ground /70 measures 4.13:1 and /75 measures 4.49:1, both short of
        the 4.5 these 11px labels need. /80 gives 4.87:1 on teal and 4.73:1 on
        amber, which is the lightest accent and therefore the worst case. */
-    <header className="sticky top-0 z-50 h-14 bg-accent-bar">
+    /* The bottom hairline is the boundary the bar never had. A solid block
+       ending in nothing reads as an unfinished edge; one line of the same hue,
+       a step lighter, resolves it — the same hairline vocabulary the rest of
+       the site uses, in the one place that was missing it. Purely decorative,
+       so it carries no contrast obligation. */
+    <header className="sticky top-0 z-50 h-14 border-b border-accent-bar-edge bg-accent-bar">
 
-      <div className="container-grid relative flex h-14 items-center justify-between gap-4 sm:gap-8">
+      {/* h-full, not a second h-14: preflight puts every box on border-box, so
+          the header's own h-14 now includes the 1px edge and its content box is
+          55px. A nested h-14 would overflow it by exactly that pixel and push
+          the row off-centre. The bar's outer height is still 56px, which is
+          what scroll-margin-top and the observer's rootMargin are measured
+          against. */}
+      <div className="container-grid relative flex h-full items-center justify-between gap-4 sm:gap-8">
         <a href={onHome ? '#top' : '/'} className="flex shrink-0 items-baseline gap-2">
           <span className="text-sm font-semibold tracking-[-0.01em] text-white sm:text-[0.9375rem]">
             {name}
@@ -216,6 +266,23 @@ export function SiteHeader({
               </li>
             )}
           </ul>
+
+          {/* Decorative: aria-current on the link already states which
+              destination is current, and announcing a rule would only repeat
+              it. The transition is applied only once placed, so the first
+              appearance cannot slide in from the left edge; the reduced-motion
+              block in globals.css zeroes it for anyone who asked. */}
+          {mark && (
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute bottom-1 h-0.5 bg-white ${
+                placed
+                  ? 'transition-[left,width] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)]'
+                  : ''
+              }`}
+              style={{ left: mark.left, width: mark.width }}
+            />
+          )}
         </nav>
 
         {/* Outside the nav's scroll container on purpose: inside it, the

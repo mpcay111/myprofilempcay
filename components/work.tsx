@@ -155,11 +155,17 @@ function Capabilities({
       {items.map((capability, i) => (
         <li
           key={capability}
-          className={`grid grid-cols-[2rem_1fr] gap-x-2 border-b border-border ${
+          /* items-baseline, not a nudge. The ordinal used to carry `pt-1` — a
+             hardcoded 4px standing in for baseline alignment, and the same 4px
+             was applied beside 15px text in featured rows and 14px text in
+             compact ones, so it could not be right in both. `.label` sets
+             `leading-none`, which makes the mono baseline resolve exactly, and
+             alignment now follows whatever size sits next to it. */
+          className={`grid grid-cols-[2rem_1fr] items-baseline gap-x-2 border-b border-border ${
             featured ? 'py-3' : 'py-2.5'
           }`}
         >
-          <span className="label pt-1" aria-hidden="true">
+          <span className="label" aria-hidden="true">
             {String(i + 1).padStart(2, '0')}
           </span>
           <span

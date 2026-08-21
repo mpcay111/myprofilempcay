@@ -3,9 +3,9 @@ import { ArrowDown } from 'lucide-react';
 import { Rule } from '@/components/rule';
 import { Copy, SpecValue } from '@/components/placeholder-text';
 import { SpecList, SpecRow } from '@/components/spec';
-import { realOnly } from '@/lib/placeholder';
+import { orNull, realOnly } from '@/lib/placeholder';
 import { yearsOfExperience } from '@/lib/career';
-import type { SiteContent } from '@/lib/content/schema';
+import { orderProjects, visibleSections, type SiteContent } from '@/lib/content/schema';
 
 /**
  * The opening screen.
@@ -31,6 +31,17 @@ export function Hero({ content }: { content: SiteContent }) {
   const yearsExperience = yearsOfExperience(content.careerStartYear, content.careerStartMonth);
 
   const disciplines = realOnly(identity.disciplines);
+
+  /* The systems index beside the figure. Capped so an editable list cannot turn
+     the hero into a directory; the remainder becomes one link into Work. */
+  const INDEX_LIMIT = 8;
+  const ordered = orderProjects(projects);
+  const indexed = ordered.slice(0, INDEX_LIMIT);
+  const remaining = ordered.length - indexed.length;
+
+  /* Whether there is a Work section to point at — it is one toggle away from
+     being hidden, and two things in this file link to it. */
+  const hasWorkSection = visibleSections(content).some((s) => s.id === 'work');
 
   // Optional, and null in the default content. Everything the image brings with
   // it — the stacking context, the scrim, the layer itself — is conditional, so
@@ -62,9 +73,19 @@ export function Hero({ content }: { content: SiteContent }) {
       )}
       <div className="container-grid pb-20 pt-24 sm:pt-28 md:pb-24 lg:pb-32 lg:pt-36">
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-          {/* The spine — same construction as Section's index gutter. */}
-          <div className="lg:col-span-2">
-            <div className="flex items-baseline gap-3 lg:sticky lg:top-24 lg:block lg:border-l lg:pl-4">
+          {/* The spine — same construction as Section's index gutter, which
+              now means the full-height rail rather than the old border-l on the
+              sticky block. The hero cannot use SectionSpine itself (it has no
+              observed id and no gauge), but it sits at the same x inside the
+              same container as every section below it, so leaving it as a ~34px
+              stub while they ran floor-to-ceiling made the same column read as
+              two different devices. */}
+          <div className="lg:relative lg:col-span-2">
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-y-0 left-0 hidden w-px bg-border lg:block"
+            />
+            <div className="flex items-baseline gap-3 lg:sticky lg:top-24 lg:block lg:pl-4">
               <span className="label text-accent" aria-hidden="true">
                 00
               </span>
@@ -179,13 +200,19 @@ export function Hero({ content }: { content: SiteContent }) {
                       for the hover and focus state here exactly as it is on
                       every other control on the site — a control that starts
                       accent and loses it on hover reads as going dead. */}
-                  <a
-                    href="#work"
-                    className="inline-flex items-baseline gap-2 border-b border-border-strong pb-2 text-[0.9375rem] font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent"
-                  >
-                    Selected work
-                    <ArrowDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
-                  </a>
+                  {/* Same guard as the index's "+ N more" below: with the
+                      Work section toggled off there is no #work to reach, and a
+                      primary call to action that moves neither focus nor the
+                      page is worse than no call to action. */}
+                  {hasWorkSection && (
+                    <a
+                      href="#work"
+                      className="inline-flex items-baseline gap-2 border-b border-border-strong pb-2 text-[0.9375rem] font-medium text-foreground transition-colors hover:border-accent hover:text-accent focus-visible:border-accent focus-visible:text-accent"
+                    >
+                      Selected work
+                      <ArrowDown className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    </a>
+                  )}
 
                   <a
                     href={`mailto:${email}`}
@@ -201,8 +228,13 @@ export function Hero({ content }: { content: SiteContent }) {
                         aria-hidden="true"
                       />
                       <span className="label text-foreground">Available for work</span>
+                      {/* The annotation register, now that it has a name. This
+                          was `label normal-case tracking-normal` — three
+                          utilities undoing two of the label's defining
+                          properties, which is the shape of a style that wanted
+                          to be its own thing. */}
                       {identity.availabilityNote && (
-                        <span className="label normal-case tracking-normal">
+                        <span className="annot">
                           {identity.availabilityNote}
                         </span>
                       )}
@@ -236,10 +268,100 @@ export function Hero({ content }: { content: SiteContent }) {
                     </span>
                   </SpecRow>
 
+                  {/**
+                    * The claim and its evidence, in the same place.
+                    *
+                    * This used to be the figure alone, with the seven systems it
+                    * refers to about 1,500px further down the page. Naming them
+                    * here turns an assertion into a track record at the moment
+                    * the assertion is made — which, for a reader who gives the
+                    * page twenty seconds, is the only moment there is.
+                    *
+                    * orderProjects() is the same function the Work section
+                    * uses, so the ordinal beside a system here is the ordinal
+                    * beside it down there. Hardcoding the order in either place
+                    * is how they would disagree.
+                    */}
                   <SpecRow term="Systems built">
-                    <span className="font-mono text-[1.875rem] font-medium leading-none tracking-[-0.02em] text-foreground">
-                      {String(projects.length).padStart(2, '0')}
+                    <span className="block font-mono text-[1.875rem] font-medium leading-none tracking-[-0.02em] text-foreground">
+                      {/* The pad digit is dimmed rather than dropped: it says
+                          the figure is an instrument reading of a two-digit
+                          field, not a number somebody typed. */}
+                      {projects.length < 10 && <span className="text-subtle">0</span>}
+                      {projects.length}
                     </span>
+
+                    {indexed.length > 0 && (
+                      /* Desktop only. On a phone the hero is already the whole
+                         first screen and this would push the contact links
+                         below the fold — there, the figure alone still does its
+                         job. */
+                      <ul role="list" className="mt-5 hidden lg:block">
+                        {indexed.map((project, i) => (
+                          <li
+                            key={project.slug}
+                            className="flex items-baseline gap-3 border-t border-border py-2 first:border-t-0 first:pt-0"
+                          >
+                            {/* Decorative, like every other ordinal on the
+                                site. The <li> already conveys its position, so
+                                announcing "01" as well makes a screen reader
+                                read the number twice on every one of up to
+                                eight consecutive rows. */}
+                            <span className="label shrink-0 text-accent" aria-hidden="true">
+                              {String(i + 1).padStart(2, '0')}
+                            </span>
+                            <span className="min-w-0 flex-1 text-[0.8125rem] leading-[1.35] text-foreground">
+                              {project.name}
+                            </span>
+                            {/* orNull collapses both a missing period and an
+                                unfilled "[Year]" placeholder to nothing, and
+                                nothing is what gets rendered.
+
+                                The spec rail shows an em dash in this case,
+                                and that is right THERE because the row carries
+                                a term — "Period —" reads as a labelled blank.
+                                Here the date is an unlabelled annotation at the
+                                end of a line, so an em dash would just say
+                                "absent", currently four times out of seven, and
+                                a list of dashes undermines the very thing this
+                                block exists to demonstrate. The placeholder is
+                                still visible down in Work, which is where it
+                                gets filled in. */}
+                            {orNull(project.period) && (
+                              <span className="annot shrink-0">{project.period}</span>
+                            )}
+                          </li>
+                        ))}
+
+                        {remaining > 0 && (
+                          /* An arbitrary count is a real possibility — the list
+                             is editable — and thirty rows here would be a
+                             900px hero.
+
+                             The link is only a link when there is somewhere to
+                             go. Work is one toggle away from being hidden in
+                             the admin, and this row's whole contract is "the
+                             ones I left out are listed further down" — so with
+                             Work off, an anchor to #work would match no element,
+                             move no focus, and silently do nothing while still
+                             claiming the projects exist somewhere. The count is
+                             still true, so it is still stated; only the promise
+                             of a destination is withdrawn. */
+                          <li className="border-t border-border pt-2">
+                            {hasWorkSection ? (
+                              <a
+                                href="#work"
+                                className="label text-subtle transition-colors hover:text-accent focus-visible:text-accent"
+                              >
+                                + {remaining} more
+                              </a>
+                            ) : (
+                              <span className="label">+ {remaining} more</span>
+                            )}
+                          </li>
+                        )}
+                      </ul>
+                    )}
                   </SpecRow>
 
                   <SpecRow term="Based in">

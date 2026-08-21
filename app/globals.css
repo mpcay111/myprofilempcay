@@ -24,6 +24,11 @@
      it stays this deep tone in both themes so the white text on it keeps its
      contrast. lib/appearance.ts overrides it to match the chosen accent. */
   --accent-bar: 176 78% 24%;
+  /* The lit bottom edge of the header bar. lib/appearance.ts overrides this
+     with the chosen accent lifted 12%; this is the seed value, and like
+     --accent-bar it is deliberately NOT redefined in the dark blocks, because
+     the bar it edges is the same tone in both themes. */
+  --accent-bar-edge: 176 78% 36%;
   --accent-foreground: 0 0% 100%; /*  6.18:1 on accent */
   /* Flattens any logo to a solid silhouette so it reads on this ground. Set in
      all three theme selectors below, exactly like the colour tokens — Tailwind's
@@ -88,13 +93,36 @@
       animation-duration: 0.01ms !important;
       animation-iteration-count: 1 !important;
       transition-duration: 0.01ms !important;
+      /* The delays matter as much as the durations, and leaving them out was a
+         real hole. A staggered entrance sets `animation-delay` per item with
+         `fill-mode: both`, which holds the item at its `from` state — opacity 0
+         — for the whole delay. Zeroing only the duration meant a visitor who
+         asked for less motion watched nothing appear for as long as the stagger
+         ran. The experience disclosure below is the first thing to stagger, so
+         this stopped being latent the moment it shipped. */
+      animation-delay: 0.01ms !important;
+      transition-delay: 0ms !important;
     }
   }
 
   body {
     @apply bg-background text-foreground font-sans antialiased;
-    /* Tabular figures everywhere so every number in every table lines up. */
-    font-feature-settings: 'tnum' 1, 'cv05' 1;
+    /**
+     * `tnum` used to sit here, which was wrong twice over.
+     *
+     * Tabular figures are column figures: equal-width, so they stack. In
+     * running prose they are the wrong shape — "2013" inside a sentence sat on
+     * four equal slots and read as a part number rather than a year. Prose gets
+     * proportional figures; the data register opts into tabular below.
+     *
+     * The second problem was invisible. `font-feature-settings` is the
+     * low-level property and it is applied AFTER `font-variant-*`, so a `tnum`
+     * declared here silently defeated every `font-variant-numeric` anywhere
+     * below it — the high-level property could not win no matter where it was
+     * set. Only `cv05` (the single-storey l) belongs at this level.
+     */
+    font-feature-settings: 'cv05' 1;
+    font-variant-numeric: proportional-nums;
   }
 
   /* Anchor targets clear the 56px sticky bar. */
@@ -124,10 +152,33 @@
 
 @layer components {
   /**
-   * The signature label style. Never smaller than 11px, never below 4.95:1.
+   * The signature label style — the STRUCTURAL register. Section marks, spine
+   * indices, spec terms, tags: text that names a part of the document rather
+   * than saying anything. Never smaller than 11px, never below 4.95:1.
+   *
+   * Tabular and slashed figures are set here rather than on body. This is the
+   * register where digits line up in a column and where a reader might
+   * transcribe a value, so 0 and O have to be told apart.
    */
   .label {
     @apply font-mono text-[0.6875rem] font-medium uppercase leading-none tracking-label text-subtle;
+    font-variant-numeric: tabular-nums slashed-zero;
+  }
+
+  /**
+   * The ANNOTATION register — the second tier.
+   *
+   * Same mono voice, but for text that is read as language rather than scanned
+   * as a mark: units beside a figure, a note after a badge, a measured caption
+   * under an image. It was being hand-made at each call site as
+   * `label normal-case tracking-normal`, which is three utilities standing in
+   * for a decision nobody had written down — and they had already drifted.
+   * Uppercase and wide tracking are what make `.label` a mark; an annotation
+   * is a small sentence and wants neither.
+   */
+  .annot {
+    @apply font-mono text-[0.75rem] font-normal normal-case leading-[1.45] tracking-normal text-subtle;
+    font-variant-numeric: tabular-nums slashed-zero;
   }
 
   /**

@@ -429,6 +429,136 @@ Images already in `public/projects/` keep working; the two systems coexist, and
 
 ---
 
+### The two mono registers
+
+There are two, and the difference is worth keeping straight when adding
+anything new.
+
+`.label` is the **structural** register: section marks, spine ordinals, spec
+terms, tags. Uppercase, wide tracking, 11px. It names a part of the document
+rather than saying anything, and it is what makes six unlike sections read as
+one document.
+
+`.annot` is the **annotation** register: units beside a figure, a note after a
+badge, a date at the end of a row. Same mono voice, 12px, but neither uppercase
+nor tracked out, because an annotation is a small sentence and reading a
+sentence in wide caps is work. It was being hand-made at each call site as
+`label normal-case tracking-normal` — three utilities undoing two of the
+label's defining properties, which is what a style that wants to be its own
+thing looks like.
+
+Both opt into `tabular-nums slashed-zero`. Body text does not: prose gets
+proportional figures, because tabular figures are column figures and a year
+inside a sentence set on four equal slots reads as a part number.
+
+### Numbers
+
+Figures on this site are derived, never typed — the years count comes from the
+clock, the systems count from the content document. Two rules keep them
+readable as measurements:
+
+- **The register decides the figures.** `tabular-nums` belongs to `.label`,
+  `.annot` and the spec rail's values, where digits stack in a column. It does
+  NOT belong on `body`. It used to sit there, which was wrong twice over: it put
+  column figures in running prose, and — because `font-feature-settings` is the
+  low-level property and is applied *after* `font-variant-*` — it silently
+  defeated every `font-variant-numeric` anywhere below it. No high-level
+  declaration could win while it was there.
+- **A padded figure says so.** The hero's `07` renders its leading zero in
+  `--subtle`. It marks the number as an instrument reading of a two-digit
+  field rather than something somebody typed.
+
+### The spine
+
+The mono gutter down the left of every section, in
+[`components/section-spine.tsx`](components/section-spine.tsx) — shared by the
+home page's sections and the `/services` page, rather than each carrying its own
+copy of the markup.
+
+It reports position. The rule runs the **full height** of the section: it used
+to be a `border-l` on the sticky label block, which is only as tall as its two
+lines of text, so it looked like a spine and measured nothing — a 60px stub
+beside a 3,000px section. And the ordinal reads `03 / 07`, so the spine says
+where you are in a document whose length is editable.
+
+**Only the current section carries the accent.** Every ordinal used to be teal,
+which put seven accent marks on screen at once, all competing, none of them
+saying anything. This spends *less* accent than before, not more — `scope.tsx`
+records making and reverting exactly this mistake with eight accent icons, and
+seven static teal ordinals were the same error more quietly. The accent now
+means "you are here".
+
+When nothing is current — at the top of the page, or in a suspended background
+tab where the observer never fires — every ordinal keeps its accent. That
+fallback is deliberate: marking nothing would drain the accent off the whole
+spine and read as a broken page rather than a degraded one, so the worst case is
+the appearance that shipped before.
+
+### One observer, two consumers
+
+[`components/active-section.tsx`](components/active-section.tsx) owns the single
+`IntersectionObserver` that decides which section you are in. The header's
+current-item mark and every section's spine read it through context.
+
+There used to be one inside `SiteHeader`, observing the same elements with the
+same rootMargin, for the sole purpose of marking a menu item. Two observers
+computing "current" independently is a promise that they will eventually
+disagree — the menu highlighting one section while the spine highlights another,
+on the same screen, with nothing in the markup to explain it.
+
+The context value is `undefined` when no provider is mounted, which is
+deliberately different from "there is no current section". Consumers use that to
+fall back to their previous appearance instead of rendering an empty state.
+
+### The register mark
+
+The 2px rule under the current item in the top menu, and the reason it exists:
+the state used to be carried by colour alone — `white/80` becoming `white`,
+which is a 4.85:1 to 6.58:1 shift on the same glyphs. That is close to invisible
+as a signal, and unavailable to anyone who cannot separate those two whites.
+
+Three things about it are load-bearing:
+
+- **It hangs off `<nav>`, never off the `<ul>`.** `<nav>` is the horizontal
+  scroll container, so an absolutely positioned child scrolls *with* the items
+  on a phone instead of floating over them. The `<ul>` is deliberately left
+  unpositioned so it never becomes the `offsetParent` that `offsetLeft` is
+  measured against.
+- **It measures `offsetLeft`, never `getBoundingClientRect()`.** The rect is
+  viewport-based and drifts by the scroll offset the moment the nav scrolls.
+- **The "placed" flag gates the transition, not the visibility.** The mark is
+  painted as soon as it has a position; what waits a frame is permission to
+  animate, so the first one cannot slide in from `x:0 w:0`. Gating *opacity* on
+  that frame instead meant the mark was invisible until `requestAnimationFrame`
+  ran — and rAF does not run in a background tab, so a page restored from one
+  showed no mark at all. The worst case now is a mark that appears without
+  animating.
+
+A `ResizeObserver` re-measures on layout change, because the labels are editable
+in the admin and the webfont swaps in after first paint — a measurement taken
+once is a measurement that goes stale.
+
+### The systems index
+
+The hero's third column claims "Systems built — 07" and now names the systems
+underneath it, with dates where there are dates. The evidence used to sit about
+1,500&nbsp;px further down the page; for a reader who gives the site twenty
+seconds, that is no evidence at all.
+
+It uses the same `orderProjects()` the Work section uses, so an ordinal here is
+the same ordinal there. It caps at eight rows with a `+ N more` link into Work,
+because the list is editable and thirty rows would be a 900&nbsp;px hero. It is
+desktop-only: on a phone the hero is already the whole first screen and this
+would push the contact links below the fold, where the figure alone still does
+its job.
+
+Periods run through `orNull()`, so a missing or unfilled `[Year]` renders as
+nothing rather than as a bracketed note in the most prominent block on the site.
+The spec rail shows an em dash in that case and is right to — a row there
+carries a term, so "Period —" reads as a labelled blank. Here the date is an
+unlabelled annotation at the end of a line, and a column of dashes would
+undermine the one thing this block exists to demonstrate.
+
 ## Design system
 
 Called **DATUM** — a technical register rather than a brochure. The governing

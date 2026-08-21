@@ -100,6 +100,21 @@ export const MONO_LABELS: Record<MonoName, string> = {
 };
 
 /**
+ * The same hue, a step lighter — the lit edge along the bottom of the header.
+ *
+ * Derived rather than tabulated so it follows whichever accent is chosen, and
+ * so it cannot drift out of step with `--accent-bar` when a value is edited
+ * above. It is decorative only: a 1px boundary on a solid ground, never a text
+ * or a meaningful-UI colour, so it carries no contrast obligation of its own.
+ */
+function lift(hsl: string, by: number): string {
+  const [h, s, l] = hsl.split(/\s+/);
+  const lightness = Number.parseFloat(l);
+  if (!h || !s || Number.isNaN(lightness)) return hsl;
+  return `${h} ${s} ${Math.min(100, lightness + by)}%`;
+}
+
+/**
  * The CSS custom properties that theme the site, as a plain string.
  *
  * Emitted into a <style> tag in the document head, after globals.css, so these
@@ -116,7 +131,7 @@ export function appearanceStyles(accent: AccentName): string {
     // text: the dark-theme accent is lightened for legibility ON a dark ground,
     // which makes it a poor ground for white text itself. Every light value in
     // the table above clears 6.4:1 against white.
-    `:root{--accent:${light};--accent-bar:${light};}`,
+    `:root{--accent:${light};--accent-bar:${light};--accent-bar-edge:${lift(light, 12)};}`,
     `@media (prefers-color-scheme:dark){:root:not(.light){--accent:${dark};}}`,
     `.dark{--accent:${dark};}`,
   ].join('');

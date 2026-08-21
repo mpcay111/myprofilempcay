@@ -11,6 +11,7 @@ import { Expertise } from '@/components/expertise';
 import { About } from '@/components/about';
 import { Contact, SiteFooter } from '@/components/contact';
 import { StructuredData } from '@/components/structured-data';
+import { ActiveSectionProvider } from '@/components/active-section';
 
 /**
  * The whole site is one page, assembled in the order stored in the content
@@ -43,7 +44,10 @@ export default async function Page() {
   };
 
   return (
-    <>
+    /* Wraps the header AND the page: the bar's current-item mark and each
+       section's spine now read one observer instead of two, so they cannot
+       mark different sections as current on the same screen. */
+    <ActiveSectionProvider ids={sections.map((s) => s.id)}>
       {/* SiteHeader and Experience are client components, so every prop they
           take is serialised into the RSC payload embedded in the page HTML and
           is readable by anyone who views source. They therefore get only the
@@ -72,6 +76,6 @@ export default async function Page() {
       </main>
       <SiteFooter name={content.identity.name} />
       <StructuredData content={content} />
-    </>
+    </ActiveSectionProvider>
   );
 }

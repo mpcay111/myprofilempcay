@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { Rule } from '@/components/rule';
+import { SectionSpine } from '@/components/section-spine';
 
 type SectionProps = {
   id: string;
@@ -27,22 +28,10 @@ export function Section({ id, index, title, standfirst, children }: SectionProps
 
       <div className="container-grid py-24 md:py-32 lg:py-40">
         <div className="lg:grid lg:grid-cols-12 lg:gap-x-8">
-          {/* Index gutter — the spine. */}
-          <div className="lg:col-span-2">
-            {/* The spine is a visual device only — the section already has a
-                real <h2>, so reading "02, section Experience" before it just
-                doubles the announcement. */}
-            <div
-              aria-hidden="true"
-              className="flex items-baseline gap-3 lg:sticky lg:top-24 lg:block lg:border-l lg:border-border lg:pl-4"
-            >
-              <span className="label text-accent">{index}</span>
-              <span className="label lg:mt-3 lg:block">§ {title}</span>
-            </div>
-            <div className="mt-4 lg:hidden">
-              <Rule />
-            </div>
-          </div>
+          {/* Index gutter — the spine. Its own component because it is a client
+              component (it reads which section is current) while this shell
+              stays a server component. */}
+          <SectionSpine id={id} index={index} title={title} />
 
           {/* Content well. */}
           <div className="mt-8 lg:col-span-10 lg:mt-0">

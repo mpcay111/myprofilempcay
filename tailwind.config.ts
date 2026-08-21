@@ -20,6 +20,10 @@ const config: Config = {
         accent: 'hsl(var(--accent) / <alpha-value>)',
         'accent-foreground': 'hsl(var(--accent-foreground) / <alpha-value>)',
         'accent-bar': 'hsl(var(--accent-bar) / <alpha-value>)',
+        /* The lit edge along the bottom of the header bar. Derived from the
+           chosen accent in lib/appearance.ts, not written here, so it follows
+           whichever accent the admin selects. */
+        'accent-bar-edge': 'hsl(var(--accent-bar-edge) / <alpha-value>)',
       },
       fontFamily: {
         sans: ['var(--font-sans)', 'ui-sans-serif', 'system-ui', 'sans-serif'],
@@ -41,14 +45,19 @@ const config: Config = {
           from: { transform: 'translateX(0)' },
           to: { transform: 'translateX(-50%)' },
         },
-        'draw-rule': {
-          from: { transform: 'scaleX(0)' },
-          to: { transform: 'scaleX(1)' },
+        /* The entrance for bullets revealed by the experience disclosure. Runs
+           with a per-item `animation-delay` set inline, which is exactly why
+           the reduced-motion block in globals.css has to zero delays as well as
+           durations — `fill-mode: both` would otherwise hold each item at
+           opacity 0 for the length of its stagger. */
+        'reveal-item': {
+          from: { opacity: '0', transform: 'translateY(4px)' },
+          to: { opacity: '1', transform: 'translateY(0)' },
         },
       },
       animation: {
         marquee: 'marquee linear infinite',
-        'draw-rule': 'draw-rule 700ms cubic-bezier(0.22, 1, 0.36, 1) forwards',
+        'reveal-item': 'reveal-item 260ms cubic-bezier(0.22, 1, 0.36, 1) both',
       },
     },
   },

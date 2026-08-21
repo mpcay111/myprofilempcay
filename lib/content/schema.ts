@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { isEmbeddableVideo } from '@/lib/video';
 
 /**
  * The shape of the site's content, as stored in Supabase.
@@ -339,7 +340,21 @@ export type SiteContent = z.infer<typeof siteContentSchema>;
 export function visibleSections(content: SiteContent): SectionConfig[] {
   return resolveSections(content.sections)
     .filter((s) => s.visible)
-    .filter((s) => s.id !== 'video' || content.videos.length > 0);
+    /**
+     * Video is kept only when at least one entry will actually EMBED, not
+     * merely when the list is non-empty.
+     *
+     * `Video` renders null when nothing survives `parseVideoUrl` — a Loom or
+     * Wistia link, or a protocol-less "youtube.com/watch?v=…", all parse to
+     * null, and the admin warns about them but still saves them. Counting the
+     * list length instead meant one unusable link left `video` in this list
+     * while no `<section id="video">` existed: the ordinals skipped 03, the
+     * menu carried a link to an anchor that resolved to nothing, and the
+     * spine's gauge reported a denominator one higher than the number of
+     * sections on the page. One predicate here fixes all three, because all
+     * three read this list.
+     */
+    .filter((s) => s.id !== 'video' || content.videos.some((v) => isEmbeddableVideo(v.url)));
 }
 export type Identity = z.infer<typeof identitySchema>;
 export type Project = z.infer<typeof projectSchema>;
