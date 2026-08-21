@@ -206,11 +206,7 @@ export function resolveSections(stored: SectionConfig[]): SectionConfig[] {
 export const themeSchema = z.enum(['system', 'light', 'dark']);
 export type ThemeSetting = z.infer<typeof themeSchema>;
 
-/**
- * Global appearance. A fixed set of options rather than free pickers: every
- * accent is contrast-checked against both grounds in lib/appearance.ts, and a
- * colour picker would quietly break that the first time it was used.
- */
+/** Company and brand logos for the marquee under the header. */
 export const logoSchema = z.object({
   /** The company or brand. Used as the image's alt text. */
   name: text.min(1),
@@ -232,6 +228,56 @@ export const videoSchema = z.object({
 
 export type VideoItem = z.infer<typeof videoSchema>;
 
+/**
+ * Services — the /services page.
+ *
+ * A page rather than a section, so it has a URL that can go in a proposal, an
+ * email signature or a LinkedIn bio, and its own title and description for
+ * search. That is also why `visible` lives here: turning it off removes the
+ * menu link and returns a 404 for the route, so an unfinished page is never
+ * quietly reachable by anyone who guesses the URL.
+ */
+export const serviceSchema = z.object({
+  title: text.min(1),
+  /** One declarative sentence: what the client actually ends up with. */
+  promise: nullableText,
+  /** Concrete deliverables. Rendered as a list. */
+  deliverables: z.array(text).default([]),
+  /** Who it is for, one short clause. */
+  audience: nullableText,
+  /** Engagement shape — "Fixed-scope build", "Monthly retainer", "Day rate". */
+  format: nullableText,
+});
+
+export type ServiceItem = z.infer<typeof serviceSchema>;
+
+export const servicesSchema = z.object({
+  /** Off removes the nav link AND 404s the route. See the note above. */
+  visible: z.boolean().default(true),
+  /** Nav label. Separate from `title` so the menu can stay short. */
+  label: text.min(1).default('Services'),
+  /** The <h1>. */
+  title: text.min(1).default('Services'),
+  /** Standfirst under the heading. */
+  intro: nullableText.default(null),
+  /**
+   * The page's own <meta name="description">. Falls back to `intro`, then to
+   * the site description, so an empty field never produces an empty tag.
+   */
+  metaDescription: nullableText.default(null),
+  /** Closing block above the footer. Both null hides it entirely. */
+  ctaHeading: nullableText.default(null),
+  ctaBody: nullableText.default(null),
+  items: z.array(serviceSchema).default([]),
+});
+
+export type ServicesContent = z.infer<typeof servicesSchema>;
+
+/**
+ * Global appearance. A fixed set of options rather than free pickers: every
+ * accent is contrast-checked against both grounds in lib/appearance.ts, and a
+ * colour picker would quietly break that the first time it was used.
+ */
 export const appearanceSchema = z.object({
   accent: z
     .enum(['teal', 'indigo', 'violet', 'amber', 'rose', 'green', 'blue', 'slate'])
@@ -266,10 +312,35 @@ export const siteContentSchema = z.object({
   careerStartYear: z.number().int().min(1950).max(2100),
   careerStartMonth: z.number().int().min(1).max(12),
   videos: z.array(videoSchema).default([]),
+  services: servicesSchema.default({
+    visible: true,
+    label: 'Services',
+    title: 'Services',
+    intro: null,
+    metaDescription: null,
+    ctaHeading: null,
+    ctaBody: null,
+    items: [],
+  }),
   logos: z.array(logoSchema).default([]),
 });
 
 export type SiteContent = z.infer<typeof siteContentSchema>;
+
+/**
+ * The sections that actually render, in page order.
+ *
+ * Both the home page and the header nav read this, including the nav on
+ * /services, so a section can never appear in the menu without existing on the
+ * page. The video rule lives here rather than in the page for the same reason:
+ * a visible-but-empty video section would put a menu item on every page that
+ * scrolls to nothing.
+ */
+export function visibleSections(content: SiteContent): SectionConfig[] {
+  return resolveSections(content.sections)
+    .filter((s) => s.visible)
+    .filter((s) => s.id !== 'video' || content.videos.length > 0);
+}
 export type Identity = z.infer<typeof identitySchema>;
 export type Project = z.infer<typeof projectSchema>;
 export type ExperienceEntry = z.infer<typeof experienceEntrySchema>;

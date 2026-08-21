@@ -43,6 +43,7 @@ export function seedContent(): SiteContent {
     careerStartMonth: seed.careerStartMonth,
     videos: seed.videos,
     logos: seed.logos,
+    services: seed.services,
   });
 
   if (!parsed.success) {
@@ -58,7 +59,9 @@ export function seedContent(): SiteContent {
   return parsed.data;
 }
 
-async function readFromDatabase(): Promise<SiteContent | null> {
+/** The stored JSON, exactly as it came back. Unvalidated on purpose — see
+ *  the note on the cache below. */
+async function readRawFromDatabase(): Promise<unknown | null> {
   if (!isSupabaseConfigured()) return null;
 
   try {
@@ -74,41 +77,55 @@ async function readFromDatabase(): Promise<SiteContent | null> {
     }
     if (!data) return null;
 
-    const parsed = siteContentSchema.safeParse(data.data);
-    if (!parsed.success) {
-      console.error(
-        '[content] Stored document failed validation, using seed:',
-        JSON.stringify(parsed.error.flatten().fieldErrors),
-      );
-      return null;
-    }
-
-    return parsed.data;
+    return data.data;
   } catch (cause) {
     console.error('[content] Supabase unreachable, using seed:', cause);
     return null;
   }
 }
 
+function validateStored(raw: unknown | null): SiteContent | null {
+  if (raw === null || raw === undefined) return null;
+
+  const parsed = siteContentSchema.safeParse(raw);
+  if (!parsed.success) {
+    console.error(
+      '[content] Stored document failed validation, using seed:',
+      JSON.stringify(parsed.error.flatten().fieldErrors),
+    );
+    return null;
+  }
+
+  return parsed.data;
+}
+
 /**
  * Cached across requests and invalidated on save, so a published page does not
  * hit the database on every visit. The cache key is static because there is
  * exactly one document.
+ *
+ * It caches the RAW row and validates afterwards, which is the whole reason
+ * this is split in two. Caching the parsed document instead meant a cache entry
+ * written before a field existed was replayed verbatim, so that field's schema
+ * default never ran and the value came back `undefined` — a crash, not a
+ * fallback. Next's data cache outlives a deployment, so the first deploy adding
+ * any content field would have hit it in production. Validating on the way out
+ * means defaults are applied to every read, however old the cached bytes are.
  */
-const cachedContent = unstable_cache(
-  async (): Promise<SiteContent> => (await readFromDatabase()) ?? seedContent(),
+const cachedRow = unstable_cache(
+  async (): Promise<unknown | null> => readRawFromDatabase(),
   ['site-content-v1'],
   { tags: [CONTENT_TAG] },
 );
 
 export async function getContent(): Promise<SiteContent> {
-  return cachedContent();
+  return validateStored(await cachedRow()) ?? seedContent();
 }
 
 /** Reads straight past the cache. The admin needs the current row, not a
  *  possibly stale copy, or it would save edits on top of old data. */
 export async function getContentUncached(): Promise<SiteContent> {
-  return (await readFromDatabase()) ?? seedContent();
+  return validateStored(await readRawFromDatabase()) ?? seedContent();
 }
 
 /**

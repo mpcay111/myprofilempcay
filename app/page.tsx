@@ -1,5 +1,5 @@
 import { getContent } from '@/lib/content/source';
-import { resolveSections, type SectionId } from '@/lib/content/schema';
+import { visibleSections, type SectionId } from '@/lib/content/schema';
 import { SiteHeader } from '@/components/site-header';
 import { Hero } from '@/components/hero';
 import { Work } from '@/components/work';
@@ -27,13 +27,10 @@ import { StructuredData } from '@/components/structured-data';
 export default async function Page() {
   const content = await getContent();
 
-  /* A visible-but-empty video section would render a heading over nothing, and
-   * its menu item would scroll to nothing. Dropping it HERE — before the list
-   * splits into header and page — keeps the menu and the page in agreement,
-   * which is the invariant the unified section list exists to protect. */
-  const sections = resolveSections(content.sections)
-    .filter((s) => s.visible)
-    .filter((s) => s.id !== 'video' || content.videos.length > 0);
+  /* Shared with /services, so the menu is identical on both pages and cannot
+   * list a section this page does not render. The video rule lives inside it —
+   * see visibleSections(). */
+  const sections = visibleSections(content);
 
   const render: Record<SectionId, (index: string) => React.ReactNode> = {
     work: (index) => <Work content={content} index={index} />,
@@ -58,6 +55,7 @@ export default async function Page() {
         credentials={content.identity.credentials}
         sections={sections}
         themeDefault={content.theme}
+        servicesLabel={content.services.visible ? content.services.label : null}
       />
       {/* Directly under the header and in normal flow, so it scrolls away
           rather than permanently occupying a second sticky strip. Renders

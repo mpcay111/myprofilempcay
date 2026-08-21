@@ -67,6 +67,13 @@ All of these are editable from `/admin` under the tab named in brackets:
 
 - **Site URL** *(Identity)* — still `example.com`. It drives the canonical URL,
   the sitemap, `robots.txt`, and the social card. Set it before you share a link.
+  It matters more now that there is a second page: `/services` currently
+  declares its canonical URL as `https://example.com/services`, which tells
+  search engines the real page is a copy of one that does not exist.
+- **Services wording** *(Services)* — the engagement lines say "Fixed-scope
+  build", "Retainer", "day rate" and so on, with no durations, prices or
+  minimum terms in them. That is deliberate: those are commercial terms only
+  you can set. Add them once you know what you actually want to commit to.
 - **LinkedIn URL** *(Contact)* — still `[username]`. Until it is filled, the site
   deliberately shows your name as plain text rather than linking to a 404.
 - **Show phone** *(Contact)* — off. Your number is stored but is not rendered, not
@@ -302,6 +309,63 @@ That button matters — WCAG 2.2.2 requires a way to stop anything that moves by
 itself for more than five seconds, and hover-pause does not count because
 keyboard and touch users have no hover. Anyone whose system asks for reduced
 motion gets a still bar and never has to press anything.
+
+### Services page
+
+Admin → **Services**. Unlike everything else on this site, this one is a real
+page at `/services` rather than a section of the one-pager — so it has an
+address you can put in a proposal, an email signature or a LinkedIn profile,
+and its own title and search description.
+
+It has three parts: the page itself (menu label, heading, introduction, search
+description), the list of services, and a closing block. Each service carries a
+name, one sentence on what the client gets, a bulleted list of what is
+included, who it is for, and the shape of the engagement. The last two are
+optional and render on the small label rail; leave them blank to omit them.
+
+**Turning it off is a single switch, and it means off.** Clearing *Show the
+Services page* removes the menu link, makes `/services` return a genuine 404,
+and drops the URL from `sitemap.xml`. Hiding only the link would have left the
+page fully readable to anyone holding the address or arriving from a stale
+search result, which is not what "hidden" means to the person who switched it
+off. Nothing written in the admin is deleted.
+
+Three things worth knowing:
+
+- **The header rewrites its own links off the home page.** The section links
+  are in-page anchors, so `#experience` points at nothing on `/services`. Off
+  the home page they become `/#experience`, the wordmark points at `/` instead
+  of `#top`, and the scroll-spy that marks the current section switches off —
+  it would otherwise mark a section that is not on the page.
+- **The menu comes from one list.** `visibleSections()` is shared by the home
+  page and the services page, so the menu cannot advertise a section the page
+  does not render.
+- **The page description falls back.** An empty *Search description* uses the
+  introduction, and an empty introduction uses the site description, so the
+  `<meta>` tag is never emitted empty.
+
+The order of the services is the order on the page. Put the strongest offer
+first — it is the one most people read.
+
+### Seeding new fields into a saved document
+
+`content/profile.ts` is only the seed. Once anything has been saved in the
+admin, the database row wins, and a field added later exists in the schema but
+not in that row — so it renders as its empty default and the copy written in
+the seed never appears.
+
+```bash
+node scripts/seed-missing.mjs
+```
+
+reports what is missing; `--write` applies it. It **only ever adds**: a field
+already present and non-empty in the saved document is left alone, so it cannot
+overwrite anything written in the admin. The field list is read out of
+`siteContentSchema` rather than hardcoded, so it does not go stale.
+
+Note that the site caches the content document and only revalidates it when the
+admin saves. After running this against a live site, either save once in the
+admin or redeploy — a deploy prerenders against a fresh read and picks it up.
 
 ### Section order
 

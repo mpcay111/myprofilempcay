@@ -547,6 +547,148 @@ export const orderedProjects: Project[] = [
   ...projects.filter((p) => !p.featured),
 ];
 
+export type ServiceItem = {
+  title: string;
+  promise: string | null;
+  deliverables: string[];
+  audience: string | null;
+  format: string | null;
+};
+
+export type ServicesContent = {
+  visible: boolean;
+  label: string;
+  title: string;
+  intro: string | null;
+  metaDescription: string | null;
+  ctaHeading: string | null;
+  ctaBody: string | null;
+  items: ServiceItem[];
+};
+
+/**
+ * The /services page. Edit it in the admin — this is only the seed used before
+ * anything has been saved, and when the database is unreachable.
+ *
+ * `visible: false` removes the menu link and 404s the route together, so the
+ * page cannot be reached by guessing the URL while it is switched off.
+ */
+export const services: ServicesContent = {
+  visible: true,
+  label: 'Services',
+  title: 'Services',
+  intro:
+    'Three shapes of work: building the system an operation runs on, fixing a specific part of the operation, or holding the operating seat itself. Most engagements are some combination of the three. Where a problem needs none of them, I would rather say so than scope it.',
+  metaDescription:
+    'Fractional COO, operations consultancy, people leadership, and internal systems built in Google Sheets, Apps Script and web applications — by an operations leader with twelve years from the front line to the COO chair.',
+  ctaHeading: 'Start with the problem, not the package.',
+  ctaBody:
+    'Tell me what is not working and I will tell you honestly whether it needs a system, a process, a hire, or none of those.',
+  items: [
+    {
+      title: 'Internal Systems & Web Applications',
+      promise:
+        'I build the tool the operation actually runs on — inside your own Google Workspace, on your own data, with a browser interface for the jobs a shared sheet has stopped being able to hold.',
+      deliverables: [
+        'A build in Google Sheets, with Apps Script behind the parts that need automating.',
+        'An Apps Script HTML Service interface where the job needs screens rather than tabs.',
+        'Access control per role, so people see the records and functions belonging to their job.',
+        'Approval chains where a record needs one, and alerts for what is pending or missing.',
+        'Handover notes, an SOP, and training for whoever maintains it after me.',
+      ],
+      audience: 'Teams running the operation on spreadsheets nobody owns.',
+      format: 'Fixed-scope build',
+    },
+    {
+      title: 'Reporting & KPI Systems',
+      promise:
+        'Every number the team is measured on gets defined, sourced and built once, so it calculates the same way each time and each person sees their own score before anyone has to raise it.',
+      deliverables: [
+        'KPI definitions with weights and passing scores, agreed before anything is measured.',
+        'Productivity and quality reported daily, weekly and monthly, without a manual rebuild.',
+        'An individual scorecard visible to the person it describes, updating as the week runs.',
+        'Error and trend breakdowns by person and by category.',
+        'Campaign and channel reporting, with the written summary generated from the same figures as the table.',
+      ],
+      audience: 'Managers reconciling the same number from more than one sheet.',
+      format: 'Fixed-scope build, or part of a retainer',
+    },
+    {
+      title: 'Hiring & Onboarding Automation',
+      promise:
+        'Hiring moves on one pipeline — screening, scheduling and candidate correspondence handled by the system — so nobody spends the week chasing a calendar.',
+      deliverables: [
+        'Structured screening, scored against criteria set in advance.',
+        'Interview scheduling through Google Calendar, with meeting links attached automatically.',
+        'Status changes that send their own candidate emails.',
+        'Applicant progress tracked across the whole pipeline, with dated history.',
+        'Replies to unsuccessful applicants sent to the same standard as the rest.',
+      ],
+      audience: 'Hiring managers running a pipeline out of a shared inbox.',
+      format: 'Fixed-scope build',
+    },
+    {
+      title: 'Fulfilment & Customer Operations',
+      promise:
+        'The order-to-delivery path and the support queue behind it get mapped, then given an owner, a forecast and a number that is actually reviewed.',
+      deliverables: [
+        'Order-to-delivery workflow mapped end to end, with an owner against each handoff.',
+        'Inventory adjustment driven by the SOP rather than a manual count.',
+        'Shipment and receivables tracking, with pending and missing items surfaced on a dashboard.',
+        'Volume forecasting per channel, and an allocation rule for phone, chat and email.',
+        'Vendor and partner coordination against agreed service levels.',
+      ],
+      audience:
+        'E-commerce operations where the customer finds the error before the team does.',
+      format: 'Fixed scope, or a day rate',
+    },
+    {
+      title: 'Operations Management Consultancy',
+      promise:
+        'I walk the operation as it actually runs, write up what is costing time, money and accuracy with the cost or risk against each finding, and leave a sequenced plan with owners against it.',
+      deliverables: [
+        'Interviews with the people doing the work, not only the people managing it.',
+        'Bottleneck and root-cause findings, ranked by what each one costs you.',
+        'SOPs written for the person doing the job, with a review cycle that keeps them current.',
+        'An operating cadence: who reviews what, how often, and where a problem escalates.',
+        'Lean Six Sigma method applied to the two or three problems worth the effort.',
+      ],
+      audience: 'Founders whose operation stopped scaling with headcount.',
+      format: 'Fixed-scope review, delivery quoted separately',
+    },
+    {
+      title: 'People Leadership',
+      promise:
+        'The management layer gets built: leads who set expectations, coach from their own cases and run reviews on a fixed date, with the structure, career paths and policy written down behind them.',
+      deliverables: [
+        'Team structure, roles and reporting lines defined.',
+        'Recruitment, onboarding and training built as one process rather than three.',
+        'Career paths, progression criteria and written policy.',
+        'A coaching routine and real-time feedback for team leads.',
+        'Recognition and incentive schemes tied to measured output.',
+      ],
+      audience:
+        'Leads promoted for their own output, and companies standing up a team in the Philippines.',
+      format: 'Retainer, or a fixed coaching block',
+    },
+    {
+      title: 'Fractional COO',
+      promise:
+        'I hold the operating seat part-time — cadence, numbers, fulfilment and people — and train the person who eventually takes it back.',
+      deliverables: [
+        'A weekly operating cadence, with a named owner against every number.',
+        'Monthly review against agreed KPIs: operating cost, order accuracy, on-time delivery, output per head.',
+        'Support to sales and finance on forecasting, budgeting and cash flow.',
+        'Systems built where they are needed, rather than procured.',
+        'A successor developed from the start, so the arrangement has an end.',
+      ],
+      audience:
+        'Founder-led businesses past the founder’s own reach and short of a full-time COO.',
+      format: 'Retainer · part-time',
+    },
+  ],
+};
+
 export type LogoItem = { name: string; image: string | null; url: string | null };
 
 /** Company and brand logos for the marquee under the header. Empty by default;

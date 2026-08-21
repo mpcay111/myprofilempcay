@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { SectionConfig, ThemeSetting } from '@/lib/content/schema';
 import { ThemeToggle } from '@/components/theme-toggle';
 
@@ -27,6 +28,7 @@ export function SiteHeader({
   credentials,
   sections,
   themeDefault,
+  servicesLabel = null,
 }: {
   name: string;
   credentials: string | null;
@@ -34,8 +36,23 @@ export function SiteHeader({
   sections: SectionConfig[];
   /** Only the default; the visitor's own choice overrides it client-side. */
   themeDefault: ThemeSetting;
+  /**
+   * Label for the /services link, or null to omit it. Null both hides the link
+   * and 404s the route — see app/services/page.tsx.
+   */
+  servicesLabel?: string | null;
 }) {
   const [activeId, setActiveId] = useState<string | null>(null);
+
+  /**
+   * The section links are in-page anchors, which stop working the moment this
+   * bar is rendered on any page that is not the one-pager: "#experience" on
+   * /services points at nothing. Off the home page they become "/#experience"
+   * — a real navigation back to the page that owns those sections.
+   */
+  const pathname = usePathname();
+  const onHome = pathname === '/';
+  const sectionHref = (id: string) => (onHome ? `#${id}` : `/#${id}`);
 
   const navRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
@@ -49,6 +66,14 @@ export function SiteHeader({
    * name a section that is not on the page. Those entries are filtered out and
    * simply never activate. */
   useEffect(() => {
+    /* Nothing to observe off the home page — those sections live on another
+       document, and leaving the observer running would mark a nav item
+       "current" on a page that does not contain it. */
+    if (!onHome) {
+      setActiveId(null);
+      return;
+    }
+
     const observed = sections
       .map((item) => document.getElementById(item.id))
       .filter((el): el is HTMLElement => el !== null);
@@ -72,7 +97,7 @@ export function SiteHeader({
 
     for (const element of observed) observer.observe(element);
     return () => observer.disconnect();
-  }, [sections]);
+  }, [sections, onHome]);
 
   /* Below md the nav is a one-line horizontal scroller, so the active
    * destination can sit off-screen. Scrolling the container directly (rather
@@ -110,7 +135,7 @@ export function SiteHeader({
     <header className="sticky top-0 z-50 h-14 bg-accent-bar">
 
       <div className="container-grid relative flex h-14 items-center justify-between gap-4 sm:gap-8">
-        <a href="#top" className="flex shrink-0 items-baseline gap-2">
+        <a href={onHome ? '#top' : '/'} className="flex shrink-0 items-baseline gap-2">
           <span className="text-sm font-semibold tracking-[-0.01em] text-white sm:text-[0.9375rem]">
             {name}
           </span>
@@ -135,7 +160,7 @@ export function SiteHeader({
               return (
                 <li key={item.id} className="shrink-0">
                   <a
-                    href={`#${item.id}`}
+                    href={sectionHref(item.id)}
                     ref={(node) => {
                       itemRefs.current[item.id] = node;
                     }}
@@ -156,6 +181,25 @@ export function SiteHeader({
                 </li>
               );
             })}
+
+            {/* A page, not a section — so it gets `aria-current="page"` rather
+                than "location", and a hairline in front of it at sm+ to mark
+                that it leaves this document rather than scrolling within it. */}
+            {servicesLabel && (
+              <li className="shrink-0 sm:border-l sm:border-white/25 sm:pl-5">
+                <a
+                  href="/services"
+                  aria-current={pathname === '/services' ? 'page' : undefined}
+                  className={`label block whitespace-nowrap py-2 transition-colors ${
+                    pathname === '/services'
+                      ? 'text-white'
+                      : 'text-white/80 hover:text-white focus-visible:text-white'
+                  }`}
+                >
+                  {servicesLabel}
+                </a>
+              </li>
+            )}
           </ul>
         </nav>
 

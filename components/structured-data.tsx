@@ -106,3 +106,64 @@ export function StructuredData({ content }: { content: SiteContent }) {
     </>
   );
 }
+
+/**
+ * JSON-LD for /services.
+ *
+ * Separate from StructuredData because the two pages make different claims: the
+ * home page describes a Person, this one describes what that person sells. Both
+ * run every value through the placeholder filter first — an unfinished page
+ * showing "[rate]" on screen is a visible prompt to finish it, but the same
+ * string harvested into a search result is just wrong.
+ *
+ * A service with no real title is dropped rather than emitted empty, and if
+ * that leaves nothing the whole block is omitted.
+ */
+export function ServicesStructuredData({ content }: { content: SiteContent }) {
+  const { identity, services } = content;
+
+  const name = orNull(identity.name);
+  const url = new URL('/services', identity.siteUrl).toString();
+
+  const offered = services.items.filter((s) => !isPlaceholder(s.title));
+  if (offered.length === 0) return null;
+
+  const provider = {
+    '@type': 'Person',
+    ...(name ? { name } : {}),
+    url: identity.siteUrl,
+    ...(orNull(identity.role) ? { jobTitle: identity.role } : {}),
+  };
+
+  const catalog = {
+    '@context': 'https://schema.org',
+    '@type': 'OfferCatalog',
+    name: name ? `${name} — ${services.title}` : services.title,
+    url,
+    ...(services.intro && !isPlaceholder(services.intro)
+      ? { description: services.intro }
+      : {}),
+    itemListElement: offered.map((service, i) => ({
+      '@type': 'Offer',
+      position: i + 1,
+      itemOffered: {
+        '@type': 'Service',
+        name: service.title,
+        ...(service.promise && !isPlaceholder(service.promise)
+          ? { description: service.promise }
+          : {}),
+        ...(service.audience && !isPlaceholder(service.audience)
+          ? { audience: { '@type': 'Audience', audienceType: service.audience } }
+          : {}),
+        provider,
+      },
+    })),
+  };
+
+  return (
+    <script
+      type="application/ld+json"
+      dangerouslySetInnerHTML={{ __html: JSON.stringify(catalog) }}
+    />
+  );
+}

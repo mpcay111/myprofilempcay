@@ -15,14 +15,39 @@
 import fs from 'node:fs';
 import path from 'node:path';
 
-const HTML = path.join(process.cwd(), '.next', 'server', 'app', 'index.html');
+/**
+ * Every prerendered page, concatenated.
+ *
+ * This used to read index.html alone, which meant a second page could leak the
+ * phone number, a secret or a placeholder and still report 8/8. The checks
+ * below are page-agnostic, so scanning the whole prerendered output costs
+ * nothing and cannot go stale as routes are added.
+ */
+const APP_DIR = path.join(process.cwd(), '.next', 'server', 'app');
 
-if (!fs.existsSync(HTML)) {
-  console.error('No prerendered page found. Run `npm run build` first.');
+function prerenderedPages(dir) {
+  if (!fs.existsSync(dir)) return [];
+  return fs.readdirSync(dir, { withFileTypes: true }).flatMap((entry) => {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) return prerenderedPages(full);
+    return entry.name.endsWith('.html') ? [full] : [];
+  });
+}
+
+const pages = prerenderedPages(APP_DIR);
+
+if (pages.length === 0) {
+  console.error('No prerendered pages found. Run `npm run build` first.');
   process.exit(1);
 }
 
-const html = fs.readFileSync(HTML, 'utf8');
+const html = pages.map((file) => fs.readFileSync(file, 'utf8')).join('\n');
+
+console.log(
+  `Scanning ${pages.length} prerendered page(s): ` +
+    pages.map((f) => path.relative(APP_DIR, f)).join(', ') +
+    '\n',
+);
 
 /**
  * Reads a value out of .env.local without expanding it, so the checks below
