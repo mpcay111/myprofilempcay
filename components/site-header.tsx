@@ -56,6 +56,7 @@ export function SiteHeader({
 
   const navRef = useRef<HTMLElement | null>(null);
   const itemRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
+  const servicesRef = useRef<HTMLAnchorElement | null>(null);
 
   /* The observation band is the top ~40% of the viewport, below the bar. A
    * section counts as "current" while it still occupies that band, and the
@@ -104,7 +105,17 @@ export function SiteHeader({
    * than scrollIntoView) keeps the page itself out of it. */
   useEffect(() => {
     const nav = navRef.current;
-    const item = activeId ? itemRefs.current[activeId] : null;
+
+    /* On /services the current destination is the Services link, not a
+       section — activeId is null there. Without this the link for the page you
+       are actually on sits off the right-hand edge of the scroller on a phone,
+       which is the one item that should never be the hidden one. */
+    const item = onHome
+      ? activeId
+        ? itemRefs.current[activeId]
+        : null
+      : servicesRef.current;
+
     if (!nav || !item) return;
     if (nav.scrollWidth <= nav.clientWidth) return;
 
@@ -116,7 +127,7 @@ export function SiteHeader({
         ? 'auto'
         : 'smooth',
     });
-  }, [activeId]);
+  }, [activeId, onHome, pathname]);
 
   return (
     /* A solid accent bar in both themes. It used to be transparent over the
@@ -150,7 +161,10 @@ export function SiteHeader({
             never breaks that measurement. */}
         <nav
           ref={navRef}
-          aria-label="Sections"
+          /* "Main", not "Sections": it stopped being only sections when the
+             Services page link joined it. Screen readers already announce the
+             role, so the label must not repeat the word "navigation". */
+          aria-label="Main"
           className="relative -my-1 min-w-0 overflow-x-auto py-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
         >
           <ul role="list" className="flex items-center gap-5">
@@ -189,6 +203,7 @@ export function SiteHeader({
               <li className="shrink-0 sm:border-l sm:border-white/25 sm:pl-5">
                 <a
                   href="/services"
+                  ref={servicesRef}
                   aria-current={pathname === '/services' ? 'page' : undefined}
                   className={`label block whitespace-nowrap py-2 transition-colors ${
                     pathname === '/services'
